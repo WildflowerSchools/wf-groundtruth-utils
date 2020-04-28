@@ -31,6 +31,7 @@ def list_annotations(platform, job_name):
               help="output folder, exports stored in '$OUTPUT/$job_name/$timestamp'")
 @click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine',
               help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
+# TODO: Consider adding confidence filter
 @click.argument("job_name")
 def cli_generate_image_set(platform, output, mode, job_name):
     generate_image_set(job_name, platform=platform, output=output, mode=mode)

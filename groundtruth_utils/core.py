@@ -30,7 +30,8 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
     annotations = active_platform.fetch_annotations(job_name)
 
     now = datetime.now()
-    instance_output_path = "%s/%s/%s" % (output, job_name, now.strftime("%d-%m-%YT%H:%M:%S"))
+    instance_output_path = "%s/%s/%s" % (output, job_name, now.strftime("%m-%d-%YT%H:%M:%S"))
+
     pathlib.Path(instance_output_path).mkdir(parents=True, exist_ok=True)
 
     for image in annotations.images:

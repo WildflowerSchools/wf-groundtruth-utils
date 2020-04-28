@@ -1,8 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-import cv2
-import numpy as np
-import os
+from PIL import Image, ImageDraw
 
 from .aws.s3_util import download_fileobj_as_bytestream
 from .platforms.models.annotation import AnnotationTypes
@@ -19,26 +17,26 @@ def draw_annotations(image_uri, annotations):
     # Load image
     try:
         bytes_stream.seek(0)
-        img_str = bytes_stream.read()
-        np_arr = np.fromstring(img_str, dtype=np.uint8)
-        img_np = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
+        img_pil = Image.open(bytes_stream, 'r').convert('RGB')
+        img_draw = ImageDraw.Draw(img_pil, 'RGBA')
     finally:
         bytes_stream.close()
 
     # Load boxes
     for annotation in annotations:
-        draw_shape_on_image(img_np, annotation)
+        draw_shape_on_image(img_draw, annotation)
 
-    return img_np
+    return img_pil
 
 
 def draw_annotations_and_save(image_uri, annotations, output_path, image_name):
-    img_np = draw_annotations(image_uri, annotations)
-    cv2.imwrite("%s/%s" % (output_path, image_name), img_np)
+    img_draw = draw_annotations(image_uri, annotations)
+    img_draw.save("%s/%s" % (output_path, image_name), "PNG")
 
 
-def draw_shape_on_image(img_np, annotation):
+def draw_shape_on_image(img_draw, annotation):
     if annotation.type == AnnotationTypes.TYPE_BOUNDING_BOX:
-        # image = np.array(img_np)
-        cv2.rectangle(img_np, (int(annotation.left), int(annotation.top)), (int(annotation.left) +
-                                                                            int(annotation.width), int(annotation.top) + int(annotation.height)), (0, 255, 0), 2)
+        img_draw.rectangle([
+            (int(annotation.left), int(annotation.top)),
+            (int(annotation.left) + int(annotation.width), int(annotation.top) + int(annotation.height))
+        ], fill=(0, 166, 156, 50), outline=(255, 255, 255))

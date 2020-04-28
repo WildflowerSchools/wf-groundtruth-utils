@@ -9,8 +9,7 @@ BASE_DEPENDENCIES = [
     'boto3>=1.12',
     'botocore>=1.15',
     'click>=7.1.1',
-    'opencv-python>=4.2',
-    'numpy>=1.18.3',
+    'Pillow>=7.1.2',
     'pydantic>=1.5.1'
 ]
 
