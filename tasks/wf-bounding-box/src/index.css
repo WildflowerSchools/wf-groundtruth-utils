@@ -1,0 +1,16 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+@import url("https://rsms.me/inter/inter.css");
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+crowd-form form {
+  /*height: 0;*/
+}

@@ -1,0 +1,17 @@
+.idea
+build
+dist
+output
+**/.DS_Store
+*.egg-info/
+
+**/__pycache__/*
+
+/tasks/*/node_modules
+/tasks/*/package-lock.json
+tasks/*/build
+
+
+
+
+
