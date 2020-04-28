@@ -27,8 +27,10 @@ def list_annotations(platform, job_name):
 @click.command(name="generate-image-set", help="Generate an annotated image set")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='sagemaker', help="platform to fetch from")
-@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()), help="output folder, exports stored in '$OUTPUT/$job_name/$timestamp'")
-@click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine', help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
+@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
+              help="output folder, exports stored in '$OUTPUT/$job_name/$timestamp'")
+@click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine',
+              help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
 @click.argument("job_name")
 def cli_generate_image_set(platform, output, mode, job_name):
     generate_image_set(job_name, platform=platform, output=output, mode=mode)

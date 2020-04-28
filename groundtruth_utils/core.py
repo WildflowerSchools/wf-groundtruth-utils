@@ -40,5 +40,7 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
         elif mode == 'separate':
             for idx, annotation in enumerate(image.annotations):
                 image_file_name = image_name.split(".", 1)
-                draw_annotations_and_save(image.url, [annotation], instance_output_path, "%s-%d.%s" % (image_file_name[0], idx, image_file_name[1]))
+                draw_annotations_and_save(
+                    image.url, [annotation], instance_output_path, "%s-%d.%s" %
+                    (image_file_name[0], idx, image_file_name[1]))
     return

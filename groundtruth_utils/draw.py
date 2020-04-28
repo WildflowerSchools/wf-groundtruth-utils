@@ -40,4 +40,5 @@ def draw_annotations_and_save(image_uri, annotations, output_path, image_name):
 def draw_shape_on_image(img_np, annotation):
     if annotation.type == AnnotationTypes.TYPE_BOUNDING_BOX:
         # image = np.array(img_np)
-        cv2.rectangle(img_np, (int(annotation.left), int(annotation.top)), (int(annotation.left)+int(annotation.width), int(annotation.top)+int(annotation.height)), (0, 255, 0), 2)
+        cv2.rectangle(img_np, (int(annotation.left), int(annotation.top)), (int(annotation.left) +
+                                                                            int(annotation.width), int(annotation.top) + int(annotation.height)), (0, 255, 0), 2)

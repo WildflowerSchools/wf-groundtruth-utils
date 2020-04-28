@@ -7,7 +7,7 @@
 ### CLI
 
     just build
-    grountruth --help
+    groundtruth --help
 
 ### Development
 
