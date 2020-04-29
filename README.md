@@ -8,6 +8,14 @@
 
     just build
     groundtruth --help
+    
+*Generate manifest*
+
+    # Create a manifest for Sagemaker with custom labels metadata, generates JSONL
+    groundtruth generate-manifest --metadata='{"labels": ["left-shoulder", "right-shoulder"]}' <<S3 URI TO IMAGE FOLDER>> > output/sagemaker-dataset.manifest
+    
+    # Create a manifest for Labelbox (metadata is ignored for Labelbox), generates JSON
+    groundtruth generate-manifest -p labelbox <<S3 URI TO IMAGE FOLDER>> > output/labelbox-dataset.json
 
 ### Development
 

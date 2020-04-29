@@ -1,7 +1,18 @@
 import click
+import json
 import os
 
-from .core import fetch_annotations, fetch_jobs, generate_image_set
+from .core import fetch_annotations, fetch_jobs, generate_image_set, generate_manifest
+
+
+def validate_json(ctx, param, value):
+    if value is None:
+        return
+
+    try:
+        return json.loads(value)
+    except ValueError:
+        raise click.BadParameter("{0} need to be in JSON format".format(param.name))
 
 
 @click.command(help="List groundtruth labeling jobs")
@@ -37,6 +48,16 @@ def cli_generate_image_set(platform, output, mode, job_name):
     generate_image_set(job_name, platform=platform, output=output, mode=mode)
 
 
+@click.command(name="generate-manifest", help="Generate a job/dataset manifest file from an AWS folder")
+@click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
+                                                    case_sensitive=False), default='sagemaker', help="platform to fetch from")
+@click.option("--metadata", type=str, callback=validate_json)
+@click.argument("s3_images_uri")
+def cli_generate_manifest(platform, metadata, s3_images_uri):
+    manifest_raw = generate_manifest(s3_images_uri, platform=platform, metadata=metadata)
+    click.echo(manifest_raw)
+
+
 @click.group()
 def cli():
     pass
@@ -45,3 +66,4 @@ def cli():
 cli.add_command(list_jobs)
 cli.add_command(list_annotations)
 cli.add_command(cli_generate_image_set)
+cli.add_command(cli_generate_manifest)

@@ -1,3 +1,6 @@
+import io
+import os
+
 import boto3
 from botocore.exceptions import ClientError
 import json
@@ -5,7 +8,7 @@ import json
 from .interface import PlatformInterface
 from .models.image import ImageList
 from .models.job import Job, JobList
-from ..aws.s3_util import download_fileobj_as_bytestream
+from ..aws.s3_util import download_fileobj_as_bytestream, split_s3_bucket_key
 
 
 class Sagemaker(PlatformInterface):
@@ -77,3 +80,27 @@ class Sagemaker(PlatformInterface):
             raise Exception("unable to download/process annotations data")
 
         return ImageList.deserialize_sagemaker(annotations_json)
+
+    def generate_manifest(self, s3_images_uri: str, metadata: dict):
+        folder_object_uris = self.__class__.list_images_in_s3_folder(s3_images_uri)
+
+        output = ""
+        bucket, _ = split_s3_bucket_key(s3_images_uri)
+
+        try:
+            fp = io.StringIO()
+            for object_key in folder_object_uris:
+                custom_metadata = {"externalId": os.path.basename(object_key)}
+                if metadata:
+
+                    custom_metadata.update(metadata)
+
+                fp.write(json.dumps({
+                    "source-ref": "https://{0}.s3.amazonaws.com/{1}".format(bucket, object_key),
+                    "metadata": custom_metadata
+                }) + "\n")
+                output = fp.getvalue()
+        finally:
+            fp.close()
+
+        return output

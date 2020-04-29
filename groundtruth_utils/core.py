@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 import pathlib
 
@@ -45,3 +46,8 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
                     image.url, [annotation], instance_output_path, "%s-%d.%s" %
                     (image_file_name[0], idx, image_file_name[1]))
     return
+
+
+def generate_manifest(s3_images_uri, platform='sagemaker', metadata=None):
+    active_platform = get_platform(platform)
+    return active_platform.generate_manifest(s3_images_uri, metadata=metadata)

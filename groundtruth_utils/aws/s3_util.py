@@ -1,4 +1,5 @@
 import io
+import re
 
 
 def download_fileobj_as_bytestream(s3_client, object_uri):
@@ -31,3 +32,29 @@ def split_s3_bucket_key(s3_path):
     if s3_path.startswith('s3://'):
         s3_path = s3_path[5:]
     return find_bucket_key(s3_path)
+
+
+def list_object_keys_in_folder(s3_client, folder_uri, filter_regex=None, image_filter=False):
+    bucket_name, key_name = split_s3_bucket_key(folder_uri)
+
+    active_filter_regex = None
+    if image_filter:
+        active_filter_regex = r".*\.(gif|jpe?g|tiff|png|webp|bmp)$"
+    elif filter_regex:
+        active_filter_regex = r"%s" % filter_regex
+
+    paginator = s3_client.get_paginator('list_objects')
+    iterator = paginator.paginate(Bucket=bucket_name, Prefix=key_name)
+    bucket_object_list = []
+    for page in iterator:
+        if "Contents" in page:
+            for key in page["Contents"]:
+                key_string = key["Key"]
+
+                match = True
+                if active_filter_regex is not None:
+                    match = bool(re.match(active_filter_regex, key_string, re.IGNORECASE))
+                if match:
+                    bucket_object_list.append(key_string)
+
+    return bucket_object_list
