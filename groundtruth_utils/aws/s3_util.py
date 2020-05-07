@@ -21,6 +21,8 @@ def find_bucket_key(s3_path):
     s3_key = ""
     if len(s3_components) > 1:
         s3_key = '/'.join(s3_components[1:])
+    if bucket.endswith('.s3.amazonaws.com'):
+        bucket = bucket.split('.')[0]
     return bucket, s3_key
 
 
@@ -31,6 +33,8 @@ def split_s3_bucket_key(s3_path):
     """
     if s3_path.startswith('s3://'):
         s3_path = s3_path[5:]
+    elif s3_path.startswith('https://'):
+        s3_path = s3_path[8:]
     return find_bucket_key(s3_path)
 
 

@@ -64,7 +64,6 @@ class Sagemaker(PlatformInterface):
 
         try:
             s3_client = boto3.client('s3')
-
             bytes_stream = download_fileobj_as_bytestream(s3_client, output_annotations_uri)
         except ClientError as e:
             print("Unexpected error fetching %s: %s" % (output_annotations_uri, e))

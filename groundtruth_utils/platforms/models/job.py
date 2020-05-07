@@ -26,8 +26,18 @@ class Job(BaseModel):
             raw=raw
         )
 
-    def deserialize_labelbox(self, raw):
-        pass
+    @staticmethod
+    def deserialize_labelbox(raw):
+        return Job(
+            id=raw['id'],
+            name=raw['name'],
+            status=raw['status'],
+            labeled=raw['labelCount'],
+            platform='labelbox',
+            created_at=raw['createdAt'],
+            updated_at=raw['updatedAt'],
+            raw=raw
+        )
 
 
 class JobList(BaseModel):

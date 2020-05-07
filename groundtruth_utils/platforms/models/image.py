@@ -5,9 +5,11 @@ from .annotation import Annotation, AnnotationList
 
 
 class Image(BaseModel):
+    id: str
+    external_id: str
     url: str
-    width: int
-    height: int
+    width: int = None
+    height: int = None
     annotations: List[Annotation]
 
     @staticmethod
@@ -27,6 +29,15 @@ class Image(BaseModel):
             width=raw_output['image_size'][0]['width'],
             height=raw_output['image_size'][0]['height'],
             annotations=AnnotationList.deserialize_sagemaker(raw_output['annotations'], raw_metadata).annotations
+        )
+
+    @staticmethod
+    def deserialize_labelbox(data, annotations):
+        return Image(
+            id=data['id'],
+            external_id=data['externalId'],
+            url=data['rowData'],
+            annotations=AnnotationList.deserialize_labelbox(annotations).annotations
         )
 
 
