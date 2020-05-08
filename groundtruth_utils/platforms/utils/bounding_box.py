@@ -1,10 +1,12 @@
 import numpy as np
 
-# Thanks goes to Adrian Rosebrock, PhD @ https://www.pyimagesearch.com/2015/02/16/faster-non-maximum-suppression-python/
+# Thanks goes to Adrian Rosebrock, PhD for giving me a huge head start ->
+# @
+# https://www.pyimagesearch.com/2015/02/16/faster-non-maximum-suppression-python/
 
 
 # Malisiewicz et al.
-def non_max_suppression_fast(boxes, overlap_thresh=0.1):
+def non_max_suppression_fast(boxes, iou_thresh=0.5, max_annotations_per_object=2, prefer_highest_iou=True):
     # if there are no boxes, return an empty list
     if len(boxes) == 0:
         return []
@@ -12,40 +14,69 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.1):
     # this is important since we'll be doing a bunch of divisions
     if boxes.dtype.kind == "i":
         boxes = boxes.astype("float")
+
+    # What's the point in running max suppression if we don't have more than a single bounding box to compare
+    if max_annotations_per_object < 2:
+        return boxes
+
     # initialize the list of picked indexes
     pick = []
-    # grab the coordinates of the bounding boxes
-    x1 = boxes[:, 0]
-    y1 = boxes[:, 1]
-    x2 = boxes[:, 2]
-    y2 = boxes[:, 3]
-    # compute the area of the bounding boxes and sort the bounding
-    # boxes by the bottom-right y-coordinate of the bounding box
-    area = (x2 - x1 + 1) * (y2 - y1 + 1)
-    idxs = np.argsort(y2)
+
+    idxs = np.argsort(boxes[:, 3])
     # keep looping while some indexes still remain in the indexes
-    # list
     while len(idxs) > 0:
         # grab the last index in the indexes list and add the
         # index value to the list of picked indexes
         last = len(idxs) - 1
-        i = idxs[last]
-        pick.append(i)
-        # find the largest (x, y) coordinates for the start of
-        # the bounding box and the smallest (x, y) coordinates
-        # for the end of the bounding box
-        xx1 = np.maximum(x1[i], x1[idxs[:last]])
-        yy1 = np.maximum(y1[i], y1[idxs[:last]])
-        xx2 = np.minimum(x2[i], x2[idxs[:last]])
-        yy2 = np.minimum(y2[i], y2[idxs[:last]])
-        # compute the width and height of the bounding box
-        w = np.maximum(0, xx2 - xx1 + 1)
-        h = np.maximum(0, yy2 - yy1 + 1)
-        # compute the ratio of overlap
-        overlap = (w * h) / area[idxs[:last]]
-        # delete all indexes from the index list that have
-        idxs = np.delete(idxs, np.concatenate(([last],
-                                               np.where(overlap > overlap_thresh)[0])))
-    # return only the bounding boxes that were picked using the
-    # integer data type
+        ii = idxs[last]
+
+        iou = intersection_over_union(boxes[idxs], last)
+
+        # find all indexes where iou score is greater than threshold
+        filtered_idxs = np.where(iou > iou_thresh)[0]
+
+        # now sort filtered scores (argsort will arrange in ascending order so we'll pick from the end)
+        filtered_idxs_sorted = filtered_idxs[np.argsort(iou[filtered_idxs])]
+
+        # use max_annotations_per_object to set a cap on how many boxes will be removed from consideration
+        num_annotations_to_remove = min(len(filtered_idxs_sorted), max_annotations_per_object - 1)
+        deletable_idx = len(filtered_idxs_sorted) - num_annotations_to_remove
+        filtered_idxs_trimmed = np.concatenate(([last], filtered_idxs_sorted[deletable_idx:]))
+
+        # If there are more than 2 competing annotations, choose the annotation
+        # with the highest iou when compared to all other annotations
+        if prefer_highest_iou and max_annotations_per_object > 2 and len(
+                filtered_idxs_trimmed) >= max_annotations_per_object:
+            filtered_boxes = boxes[idxs[filtered_idxs_trimmed]]
+            max_idx = 0
+            max_score = 0
+            for jj, _ in enumerate(filtered_boxes):
+                iou = intersection_over_union(filtered_boxes, jj)
+                new_max = np.amax(iou, 0)
+                if new_max > max_score:
+                    max_score = new_max
+                    max_idx = jj
+            pick.append(idxs[filtered_idxs_trimmed[max_idx]])
+        else:
+            pick.append(ii)
+
+        # delete all indexes from the index list that have been matched
+        idxs = np.delete(idxs, filtered_idxs_trimmed)
+    # return only the bounding boxes that were picked
     return boxes[pick]
+
+
+def intersection_over_union(boxes, comparable_index):
+    comparables = np.delete(boxes, comparable_index, 0)
+
+    xx1 = np.maximum(boxes[comparable_index, 0], comparables[:, 0])
+    yy1 = np.maximum(boxes[comparable_index, 1], comparables[:, 1])
+    xx2 = np.minimum(boxes[comparable_index, 2], comparables[:, 2])
+    yy2 = np.minimum(boxes[comparable_index, 3], comparables[:, 3])
+
+    w = np.maximum(0, xx2 - xx1 + 1)
+    h = np.maximum(0, yy2 - yy1 + 1)
+
+    box_areas = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
+    iou = (w * h) / (box_areas[comparable_index] + np.delete(box_areas, comparable_index, 0) - (w * h))
+    return iou

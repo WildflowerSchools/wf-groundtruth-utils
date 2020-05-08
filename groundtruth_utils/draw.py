@@ -6,7 +6,7 @@ from .aws.s3_util import download_fileobj_as_bytestream
 from .platforms.models.annotation import AnnotationTypes
 
 
-def draw_annotations(image_uri, annotations):
+def get_s3_image_as_pil(image_uri):
     try:
         s3_client = boto3.client('s3')
         bytes_stream = download_fileobj_as_bytestream(s3_client, image_uri)
@@ -18,9 +18,15 @@ def draw_annotations(image_uri, annotations):
     try:
         bytes_stream.seek(0)
         img_pil = Image.open(bytes_stream, 'r').convert('RGB')
-        img_draw = ImageDraw.Draw(img_pil, 'RGBA')
     finally:
         bytes_stream.close()
+
+    return img_pil
+
+
+def draw_annotations(image_uri, annotations):
+    img_pil = get_s3_image_as_pil(image_uri)
+    img_draw = ImageDraw.Draw(img_pil, 'RGBA')
 
     # Load boxes
     for annotation in annotations:
@@ -39,4 +45,4 @@ def draw_shape_on_image(img_draw, annotation):
         img_draw.rectangle([
             (int(annotation.left), int(annotation.top)),
             (int(annotation.left) + int(annotation.width), int(annotation.top) + int(annotation.height))
-        ], fill=(0, 166, 156, 50), outline=(255, 255, 255))
+        ], fill=(0, 166, 156, 50), outline=(255, 255, 255), width=3)

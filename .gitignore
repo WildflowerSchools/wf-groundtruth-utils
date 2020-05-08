@@ -4,6 +4,7 @@ dist
 output
 **/.DS_Store
 *.egg-info/
+*.ipynb
 
 **/__pycache__/*
 

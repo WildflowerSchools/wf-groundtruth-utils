@@ -16,16 +16,53 @@ from ..aws.s3_util import split_s3_bucket_key
 
 class Labelbox(PlatformInterface):
     @staticmethod
-    def fetch_job_by_name(job_name: str):
+    def fetch_raw_project_by_name(name: str):
         lb_client = LBClient()
 
-        project_list = lb_client.get_projects(where=Project.name == job_name)
+        project_list = lb_client.get_projects(where=Project.name == name)
         myiter = iter(project_list)
         project = next(myiter)
         if not project:
             raise Exception("job not found")
 
         return project
+
+    @staticmethod
+    def fetch_raw_project_data_rows_by_name(name: str):
+        project = Labelbox.fetch_raw_project_by_name(name)
+
+        lb_client = LBClient()
+        # TODO: loop with enumerator rather than building a list
+        row_data = list(
+            LabelboxCustomPaginatedCollection(
+                lb_client, ALL_ANNOTATIONS_QUERY, {
+                    "id": project.uid}, [
+                    "project", "dataRows"]))
+
+        return row_data
+
+    @staticmethod
+    def get_bboxes_by_label_from_row_data(row_data_instance: dict):
+        bboxes_by_label = {}
+
+        for tagger_label_collection in row_data_instance['labels']:
+            label = json.loads(tagger_label_collection['label'])
+            if not label:
+                continue
+
+            for feature in label['objects']:
+                if 'bbox' in feature:
+                    if feature['value'] not in bboxes_by_label:
+                        bboxes_by_label[feature['value']] = []
+
+                    bbox = feature['bbox']
+                    x1 = bbox['left']
+                    y1 = bbox['top']
+                    x2 = x1 + bbox['width']
+                    y2 = y1 + bbox['height']
+                    bboxes_by_label[feature['value']].append((x1, y1, x2, y2))
+
+        return bboxes_by_label
 
     def fetch_jobs(self, status: str, limit: int):
         lb_client = LBClient()
@@ -62,40 +99,17 @@ class Labelbox(PlatformInterface):
         return JobList(jobs=result)
 
     def fetch_annotations(self, job_name: str):
-        project = self.__class__.fetch_job_by_name(job_name)
-
-        lb_client = LBClient()
-        # TODO: loop with enumerator rather than building a list
-        row_data = list(
-            LabelboxCustomPaginatedCollection(
-                lb_client, ALL_ANNOTATIONS_QUERY, {
-                    "id": project.uid}, [
-                    "project", "dataRows"]))
+        row_data = self.__class__.fetch_raw_project_data_rows_by_name(job_name)
 
         final_images = []
         for data in row_data:
-            bboxes_by_label = {}
-
-            for tagger_label_collection in data['labels']:
-                label = json.loads(tagger_label_collection['label'])
-                if not label:
-                    continue
-
-                for feature in label['objects']:
-                    if 'bbox' in feature:
-                        if feature['value'] not in bboxes_by_label:
-                            bboxes_by_label[feature['value']] = []
-
-                        bbox = feature['bbox']
-                        x1 = bbox['left']
-                        y1 = bbox['top']
-                        x2 = x1 + bbox['width']
-                        y2 = y1 + bbox['height']
-                        bboxes_by_label[feature['value']].append((x1, y1, x2, y2))
+            bboxes_by_label = self.__class__.get_bboxes_by_label_from_row_data(data)
 
             raw_annotations = []
             for k, v in bboxes_by_label.items():
-                consolidated_boxes = non_max_suppression_fast(np.asarray(v)).tolist()
+                consolidated_boxes = non_max_suppression_fast(
+                    np.asarray(v), max_annotations_per_object=len(
+                        data["labels"])).tolist()
                 for box in consolidated_boxes:
                     annotation = {
                         "label": k,
@@ -105,7 +119,6 @@ class Labelbox(PlatformInterface):
                         "height": box[3] - box[1]}
 
                     raw_annotations.append(annotation)
-                    # final_annotations.append(Annotation.deserialize_labelbox(annotation))
 
             final_images.append(Image.deserialize_labelbox(data, raw_annotations))
 
