@@ -9,8 +9,9 @@ BASE_DEPENDENCIES = [
     'boto3>=1.12',
     'botocore>=1.15',
     'click>=7.1.1',
+    'click-log>=0.3.2',
     'labelbox>=2.4',
-    'numpy>=7.1.2',
+    'numpy>=1.16.1',
     'Pillow>=7.1.2',
     'pydantic>=1.5.1'
 ]

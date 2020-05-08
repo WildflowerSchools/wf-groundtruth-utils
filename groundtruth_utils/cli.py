@@ -1,8 +1,12 @@
 import click
+import click_log
 import json
 import os
 
+from .log import logger
 from .core import fetch_annotations, fetch_jobs, generate_image_set, generate_manifest
+
+click_log.basic_config(logger)
 
 
 def validate_json(ctx, param, value):
@@ -58,6 +62,7 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
     click.echo(manifest_raw)
 
 
+@click_log.simple_verbosity_option(logger)
 @click.group()
 def cli():
     pass

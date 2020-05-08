@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 from PIL import Image, ImageDraw
 
 from .aws.s3_util import download_fileobj_as_bytestream
+from .log import logger
 from .platforms.models.annotation import AnnotationTypes
 
 
@@ -38,6 +39,7 @@ def draw_annotations(image_uri, annotations):
 def draw_annotations_and_save(image_uri, annotations, output_path, image_name):
     img_draw = draw_annotations(image_uri, annotations)
     img_draw.save("%s/%s" % (output_path, image_name), "PNG")
+    logger.info("Saved image %s (%d annotations)" % (image_name, len(annotations)))
 
 
 def draw_shape_on_image(img_draw, annotation):
