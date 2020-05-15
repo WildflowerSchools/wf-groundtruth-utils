@@ -23,7 +23,11 @@ query GetAllAnnotations($id: ID!){
       id
       externalId
       rowData
-      labels(first: 100){
+      labels(first: 100, where: {
+        project: {
+            id: $id
+        }
+       }) {
         id
         createdBy{
           name

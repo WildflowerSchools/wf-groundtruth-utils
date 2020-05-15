@@ -12,7 +12,4 @@ output
 /tasks/*/package-lock.json
 tasks/*/build
 
-
-
-
-
+generate_coco_config.yml

@@ -1,15 +1,19 @@
 from pydantic import BaseModel
 from typing import List
 
+from .classification import Classification, ClassificationList
+
 
 class AnnotationTypes:
     TYPE_BOUNDING_BOX = "BoundingBox"
+    TYPE_KEYPOINT = "Keypoint"
     TYPE_UNKNOWN = "Unknown"
 
 
 class Annotation(BaseModel):
     confidence: float = None
     type: str
+    classifications: List[Classification] = []
     raw_annotation: dict
     raw_metadata: dict = None
     raw_metadata_annotation_idx: int = None
@@ -31,8 +35,12 @@ class Annotation(BaseModel):
     @staticmethod
     def deserialize_labelbox(raw_annotation):
         bounding_box_fingerprint = ['label', 'width', 'height', 'left', 'top']
+        keypoint_fingerprint = ['label', 'point']
+
         if all(attr in raw_annotation for attr in bounding_box_fingerprint):
             return BoundingBoxAnnotation.deserialize_labelbox(raw_annotation)
+        elif all(attr in raw_annotation for attr in keypoint_fingerprint):
+            return KeypointAnnotation.deserialize_labelbox(raw_annotation)
         else:
             return Annotation(
                 raw_annotation=raw_annotation,
@@ -95,5 +103,26 @@ class BoundingBoxAnnotation(Annotation):
             height=raw_annotation["height"],
             top=raw_annotation["top"],
             left=raw_annotation["left"],
+            raw_annotation=raw_annotation
+        )
+
+
+class KeypointAnnotation(Annotation):
+    label: str
+    x: float
+    y: float
+
+    @staticmethod
+    def deserialize_sagemaker(raw_annotation, raw_metadata, idx):
+        pass
+
+    @staticmethod
+    def deserialize_labelbox(raw_annotation):
+        return KeypointAnnotation(
+            type=AnnotationTypes.TYPE_KEYPOINT,
+            label=raw_annotation["label"],
+            x=raw_annotation["point"]["x"],
+            y=raw_annotation["point"]["y"],
+            classifications=ClassificationList.deserialize_labelbox(raw_annotation['classifications']).classifications,
             raw_annotation=raw_annotation
         )

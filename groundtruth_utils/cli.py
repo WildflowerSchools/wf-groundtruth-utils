@@ -62,6 +62,14 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
     click.echo(manifest_raw)
 
 
+@click.command(name="generate-coco", help="Generate a coco formatted dataset from many jobs")
+@click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
+                                                    case_sensitive=False), default='sagemaker', help="platform to fetch from")
+@click.argument("coco_generate_config")
+def cli_generate_coco(platform, coco_generate_config):
+    pass
+
+
 @click_log.simple_verbosity_option(logger)
 @click.group()
 def cli():
