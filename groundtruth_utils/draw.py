@@ -48,3 +48,9 @@ def draw_shape_on_image(img_draw, annotation):
             (int(annotation.left), int(annotation.top)),
             (int(annotation.left) + int(annotation.width), int(annotation.top) + int(annotation.height))
         ], fill=(0, 166, 156, 50), outline=(255, 255, 255), width=3)
+    elif annotation.type == AnnotationTypes.TYPE_KEYPOINT:
+        radius = 3
+        img_draw.ellipse([
+            (int(annotation.x) - radius, int(annotation.y) - radius),
+            (int(annotation.x) + radius, int(annotation.y) + radius)
+        ], fill=(65, 255, 126, 95), outline=(65, 255, 126))

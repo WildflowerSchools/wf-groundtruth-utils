@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List
 
 from .annotation import Annotation, AnnotationList
+from .classification import Classification, ClassificationList
 
 
 class Image(BaseModel):
@@ -11,6 +12,7 @@ class Image(BaseModel):
     width: int = None
     height: int = None
     annotations: List[Annotation]
+    classifications: List[Classification] = []
 
     @staticmethod
     def deserialize_sagemaker(raw):
@@ -32,12 +34,13 @@ class Image(BaseModel):
         )
 
     @staticmethod
-    def deserialize_labelbox(data, annotations):
+    def deserialize_labelbox(raw_data_row):
         return Image(
-            id=data['id'],
-            external_id=data['externalId'],
-            url=data['rowData'],
-            annotations=AnnotationList.deserialize_labelbox(annotations).annotations
+            id=raw_data_row['id'],
+            external_id=raw_data_row['externalId'],
+            url=raw_data_row['rowData'],
+            annotations=AnnotationList.deserialize_labelbox(raw_data_row['labels']).annotations,
+            classifications=ClassificationList.deserialize_labelbox(raw_data_row['labels']).classifications
         )
 
 

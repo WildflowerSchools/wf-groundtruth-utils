@@ -57,7 +57,7 @@ class Sagemaker(PlatformInterface):
             print("Unexpected error: %s" % e)
             raise e
 
-    def fetch_annotations(self, job_name: str):
+    def fetch_annotations(self, job_name: str, consolidate=True):
         job_raw = self.__class__.fetch_job_by_name(job_name)
 
         output_annotations_uri = job_raw['LabelingJobOutput']['OutputDatasetS3Uri']

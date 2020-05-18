@@ -1,7 +1,6 @@
 import numpy as np
 
-# Thanks goes to Adrian Rosebrock, PhD for giving me a huge head start ->
-# @
+# Thanks goes to Adrian Rosebrock, PhD, for giving me a huge head start ->
 # https://www.pyimagesearch.com/2015/02/16/faster-non-maximum-suppression-python/
 
 

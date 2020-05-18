@@ -1,13 +1,16 @@
+import copy
 import json
 import math
 import os
 
+import cv2 as cv
 from labelbox import Client as LBClient, Project
 import numpy as np
 
 from .interface import PlatformInterface
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
 from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ALL_PROJECTS_METRICS_QUERY
+from .models.annotation import Annotation, AnnotationTypes
 from .models.image import ImageList, Image
 from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast
@@ -82,6 +85,76 @@ class Labelbox(PlatformInterface):
 
         return annotations_by_label
 
+    @staticmethod
+    def consolidate_annotations(annotations: list):
+        labelers = []
+        box_annotations_by_label = {}
+        keypoint_annotations_by_label = {}
+
+        # First find and group all annotations that should be consolidated
+        for annotation in annotations:
+            labeler = annotation.raw_metadata['createdBy']['email']
+            if labeler not in labelers:
+                labelers.append(labeler)
+            # Build list of bounding box sets
+            if annotation.type == AnnotationTypes.TYPE_BOUNDING_BOX:
+                if annotation.label not in box_annotations_by_label:
+                    box_annotations_by_label[annotation.label] = {'annotation': annotation, 'bboxes': []}
+
+                x1 = annotation.left
+                y1 = annotation.top
+                x2 = x1 + annotation.width
+                y2 = y1 + annotation.height
+                box_annotations_by_label[annotation.label]['bboxes'].append((x1, y1, x2, y2))
+
+            # Build list of keypoint sets
+            elif annotation.type == AnnotationTypes.TYPE_KEYPOINT:
+                if annotation.label not in keypoint_annotations_by_label:
+                    keypoint_annotations_by_label[annotation.label] = {'annotation': annotation, 'points': []}
+
+                x = annotation.x
+                y = annotation.y
+
+                keypoint_annotations_by_label[annotation.label]['points'].append((x, y))
+
+        consolidated_annotations = []
+
+        # Consolidate boxes
+        for k, v in box_annotations_by_label.items():
+            consolidated_boxes = non_max_suppression_fast(
+                np.asarray(v["bboxes"]), max_annotations_per_object=len(
+                    labelers)).tolist()
+
+            for box in consolidated_boxes:
+                consolidated_annotation = copy.deepcopy(annotation)
+                consolidated_annotation.left = box[0]
+                consolidated_annotation.top = box[1]
+                consolidated_annotation.width = box[2] - box[0]
+                consolidated_annotation.height = box[3] - box[1]
+                consolidated_annotations.append(consolidated_annotation)
+
+        # Consolidate points
+        for k, v in keypoint_annotations_by_label.items():
+            # TODO: Improve point consolidation, likely want to do some sort of conslida
+            #consolidated_keypoint =  np.mean(np.asarray(v["points"]))
+            points = []
+            if len(v["points"]) == 1:
+                points = v["points"]
+            elif len(v["points"]) > 1:
+                criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+                flags = cv.KMEANS_RANDOM_CENTERS
+                num_clusters = round(len(v["points"]) / len(labelers))
+                _, _, cluster_points = cv.kmeans(np.float32(v["points"]), num_clusters, None, criteria, 10, flags)
+                points = cluster_points.tolist()
+
+            for point in points:
+                consolidated_annotation = copy.deepcopy(annotation)
+                consolidated_annotation.x = point[0]
+                consolidated_annotation.y = point[1]
+                consolidated_annotations.append(consolidated_annotation)
+
+        return consolidated_annotations
+
     def fetch_jobs(self, status: str, limit: int):
         lb_client = LBClient()
         projects = list(LabelboxCustomPaginatedCollection(lb_client, ALL_PROJECTS_METRICS_QUERY, {}, ["projects"]))
@@ -116,45 +189,17 @@ class Labelbox(PlatformInterface):
 
         return JobList(jobs=result)
 
-    def fetch_annotations(self, job_name: str):
+    def fetch_annotations(self, job_name: str, consolidate=True):
         row_data = self.__class__.fetch_raw_project_data_rows_by_name(job_name)
 
         final_images = []
-        for data in row_data:
-            bboxes_by_label = self.__class__.get_annotations_by_label_from_row_data('bbox', data)
+        for raw_data_row in row_data:
+            image = Image.deserialize_labelbox(raw_data_row)
 
-            raw_annotations = []
-            for k, v in bboxes_by_label.items():
-                consolidated_boxes = non_max_suppression_fast(
-                    np.asarray(v["boxes"]), max_annotations_per_object=len(
-                        data["labels"])).tolist()
-                for box in consolidated_boxes:
-                    annotation = {
-                        "label": k,
-                        "left": box[0],
-                        "top": box[1],
-                        "width": box[2] - box[0],
-                        "height": box[3] - box[1],
-                        "classifications": data["labels"]["classifications"]
-                    }
+            if consolidate:
+                image.annotations = self.__class__.consolidate_annotations(image.annotations)
 
-                    raw_annotations.append(annotation)
-
-            keypoints_by_label = self.__class__.get_annotations_by_label_from_row_data('keypoint', data)
-            raw_annotations = []
-            for k, v in keypoints_by_label.items():
-                annotation = {
-                    "label": k,
-                    "point": {
-                        "x": v['keypoints'][0][0],
-                        "y": v['keypoints'][0][1]
-                    },
-                    "classifications": v["classifications"]
-                }
-
-                raw_annotations.append(annotation)
-
-            final_images.append(Image.deserialize_labelbox(data, raw_annotations))
+            final_images.append(image)
 
         return ImageList(images=final_images)
 

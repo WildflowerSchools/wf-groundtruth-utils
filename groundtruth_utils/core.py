@@ -16,12 +16,12 @@ def fetch_worker_annotations(job_name='', worker_ids=[]):
     return
 
 
-def fetch_annotations(job_name, platform='sagemaker'):
+def fetch_annotations(job_name, platform='sagemaker', consolidate=True):
     active_platform = get_platform(platform)
     return active_platform.fetch_annotations(job_name)
 
 
-def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mode='combine'):
+def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mode='combine', consolidate=True):
     valid_modes = ['combine', 'separate']
     if mode.lower() not in valid_modes:
         raise Exception("'%s' invalid mode, must be combine|separate")

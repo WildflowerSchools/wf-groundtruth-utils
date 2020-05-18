@@ -33,9 +33,12 @@ def list_jobs(platform, status, limit):
 @click.command(help="List annotations for a given job")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='sagemaker', help="platform to fetch from")
+@click.option('--no-consolidate', is_flag=False,
+              help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
 @click.argument("job_name")
-def list_annotations(platform, job_name):
-    annotations = fetch_annotations(job_name, platform=platform)
+def list_annotations(platform, no_consolidate, job_name):
+    consolidate = not no_consolidate
+    annotations = fetch_annotations(job_name, platform=platform, consolidate=consolidate)
     click.echo(annotations.json(indent=2))
 
 
@@ -46,10 +49,13 @@ def list_annotations(platform, job_name):
               help="output folder, exports stored in '$OUTPUT/$job_name/$timestamp'")
 @click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine',
               help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
+@click.option('--no-consolidate', is_flag=False,
+              help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
 # TODO: Consider adding confidence filter
 @click.argument("job_name")
-def cli_generate_image_set(platform, output, mode, job_name):
-    generate_image_set(job_name, platform=platform, output=output, mode=mode)
+def cli_generate_image_set(platform, output, mode, no_consolidate, job_name):
+    consolidate = not no_consolidate
+    generate_image_set(job_name, platform=platform, output=output, mode=mode, consolidate=consolidate)
 
 
 @click.command(name="generate-manifest", help="Generate a job/dataset manifest file from an AWS folder")
