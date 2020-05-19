@@ -10,7 +10,7 @@ import numpy as np
 from .interface import PlatformInterface
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
 from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ALL_PROJECTS_METRICS_QUERY
-from .models.annotation import Annotation, AnnotationTypes
+from .models.annotation import AnnotationTypes
 from .models.image import ImageList, Image
 from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast

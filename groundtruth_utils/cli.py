@@ -5,8 +5,6 @@ import os
 
 from .log import logger
 from .core import fetch_annotations, fetch_jobs, generate_image_set, generate_manifest
-from .platforms.models.annotation import AnnotationList, Annotation
-from .platforms.models.image import ImageList
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
