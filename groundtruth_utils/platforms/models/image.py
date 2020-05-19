@@ -11,8 +11,24 @@ class Image(BaseModel):
     url: str
     width: int = None
     height: int = None
-    annotations: List[Annotation]
+    annotations: List[Annotation] = []
     classifications: List[Classification] = []
+
+    @staticmethod
+    def include_raw():
+        return {'id': ..., 'external_id': ..., 'url': ..., 'width': ..., 'height': ...,
+                'annotations': Annotation.include_raw(), 'classifications': Classification.include_raw()}
+
+    @staticmethod
+    def exclude_raw():
+        return {'annotations': {'__all__': Annotation.exclude_raw()}, 'classifications': {
+            '__all__': Classification.exclude_raw()}}
+
+    def set_excluded_null(self):
+        for annotation in self.annotations:
+            annotation.set_excluded_null()
+        for classification in self.classifications:
+            classification.set_excluded_null()
 
     @staticmethod
     def deserialize_sagemaker(raw):
@@ -46,6 +62,18 @@ class Image(BaseModel):
 
 class ImageList(BaseModel):
     images: List[Image]
+
+    @staticmethod
+    def include_raw():
+        return {'images': {'__all__': Image.include_raw()}}
+
+    @staticmethod
+    def exclude_raw():
+        return {'images': {'__all__': Image.exclude_raw()}}
+
+    def set_excluded_null(self):
+        for image in self.images:
+            image.set_excluded_null()
 
     @staticmethod
     def deserialize_sagemaker(raw_list):

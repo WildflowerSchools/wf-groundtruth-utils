@@ -5,6 +5,9 @@ import os
 
 from .log import logger
 from .core import fetch_annotations, fetch_jobs, generate_image_set, generate_manifest
+from .platforms.models.annotation import AnnotationList, Annotation
+from .platforms.models.image import ImageList
+from .platforms.models.job import Job
 
 click_log.basic_config(logger)
 
@@ -25,21 +28,35 @@ def validate_json(ctx, param, value):
 @click.option("-s", "--status", type=click.Choice(['inprogress', 'completed', 'failed',
                                                    'stopping', 'stopped']), default='completed', help="show jobs by status")
 @click.option("-l", "--limit", type=int, default=None, help="limit number of jobs returned")
-def list_jobs(platform, status, limit):
+@click.option('--raw', is_flag=False, help="print raw data from platform source")
+def list_jobs(platform, status, limit, raw):
     jobs = fetch_jobs(platform=platform, status=status, limit=limit)
-    click.echo(jobs.json(indent=2))
+    output_args = {'indent': 2}
+    if not raw:
+        output_args['exclude'] = Job.exclude_raw()
+
+    click.echo(jobs.json(**output_args))
 
 
 @click.command(help="List annotations for a given job")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='sagemaker', help="platform to fetch from")
+@click.option('--raw', is_flag=False, help="print raw data from platform source")
 @click.option('--no-consolidate', is_flag=False,
               help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
 @click.argument("job_name")
-def list_annotations(platform, no_consolidate, job_name):
+def list_annotations(platform, no_consolidate, raw, job_name):
     consolidate = not no_consolidate
     annotations = fetch_annotations(job_name, platform=platform, consolidate=consolidate)
-    click.echo(annotations.json(indent=2))
+    output_args = {'indent': 2}
+    if not raw:
+        annotations.set_excluded_null()
+        # output_args['exclude'] = ImageList.exclude_raw()
+        pass
+
+    click.echo(annotations.json(**output_args))
+    #actual_annotations = annotations.images[0].annotations
+    #click.echo(actual_annotations[0].json(indent=2, exclude=Annotation.exclude_raw()))
 
 
 @click.command(name="generate-image-set", help="Generate an annotated image set")

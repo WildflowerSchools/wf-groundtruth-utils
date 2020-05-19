@@ -10,6 +10,17 @@ class Classification(BaseModel):
     raw_classification: dict = None
 
     @staticmethod
+    def include_raw():
+        return {'label', 'value'}
+
+    @staticmethod
+    def exclude_raw():
+        return {'raw_classification'}
+
+    def set_excluded_null(self):
+        self.raw_classification = None
+
+    @staticmethod
     def deserialize_labelbox(raw_classification):
         values = []
         if 'answers' in raw_classification:
@@ -27,6 +38,10 @@ class Classification(BaseModel):
 
 class ClassificationList(BaseModel):
     classifications: List[Classification] = []
+
+    @staticmethod
+    def exclude_raw():
+        return {'classifications': {'__all__': {Classification.exclude_raw()}}}
 
     @staticmethod
     def deserialize_sagemaker(raw_classifications):

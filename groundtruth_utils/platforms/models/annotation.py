@@ -3,6 +3,8 @@ import json
 from pydantic import BaseModel
 from typing import List
 
+from groundtruth_utils.platforms.models.classification import Classification
+
 
 class AnnotationTypes:
     TYPE_BOUNDING_BOX = "BoundingBox"
@@ -13,9 +15,25 @@ class AnnotationTypes:
 class Annotation(BaseModel):
     confidence: float = None
     type: str
+    classifications: List[Classification] = []
     raw_annotation: dict
     raw_metadata: dict = None
     raw_metadata_annotation_idx: int = None
+
+    @staticmethod
+    def include_raw():
+        return {'confidence', 'type'}
+
+    @staticmethod
+    def exclude_raw():
+        return {'raw_annotation', 'raw_metadata', 'raw_metadata_annotation_idx'}
+
+    def set_excluded_null(self):
+        self.raw_annotation = None
+        self.raw_metadata = None
+        self.raw_metadata_annotation_idx = None
+        for classification in self.classifications:
+            classification.set_excluded_null()
 
     @staticmethod
     def deserialize_sagemaker(raw_annotation, raw_metadata, idx):
@@ -37,19 +55,31 @@ class Annotation(BaseModel):
         keypoint_fingerprint = ['title', 'point']
 
         if all(attr in raw_feature for attr in bounding_box_fingerprint):
-            return BoundingBoxAnnotation.deserialize_labelbox(raw_label_metadata, raw_feature)
+            annotation = BoundingBoxAnnotation.deserialize_labelbox(raw_label_metadata, raw_feature)
         elif all(attr in raw_feature for attr in keypoint_fingerprint):
-            return KeypointAnnotation.deserialize_labelbox(raw_label_metadata, raw_feature)
+            annotation = KeypointAnnotation.deserialize_labelbox(raw_label_metadata, raw_feature)
         else:
-            return Annotation(
+            annotation = Annotation(
                 raw_metadata=raw_label_metadata,
                 raw_annotation=raw_feature,
                 type=AnnotationTypes.TYPE_UNKNOWN
             )
 
+        classifications = []
+        if 'classifications' in raw_feature:
+            for raw_classification in raw_feature['classifications']:
+                classifications.append(Classification.deserialize_labelbox(raw_classification))
+
+        annotation.classifications = classifications
+        return annotation
+
 
 class AnnotationList(BaseModel):
     annotations: List[Annotation]
+
+    @staticmethod
+    def exclude_raw():
+        return {'annotations': {'__all__': Annotation.exclude_raw()}}
 
     @staticmethod
     def deserialize_sagemaker(raw_annotations, raw_metadata):

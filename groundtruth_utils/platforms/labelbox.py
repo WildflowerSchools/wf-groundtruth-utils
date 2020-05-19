@@ -121,6 +121,7 @@ class Labelbox(PlatformInterface):
 
         # Consolidate boxes
         for k, v in box_annotations_by_label.items():
+            annotation = v['annotation']
             consolidated_boxes = non_max_suppression_fast(
                 np.asarray(v["bboxes"]), max_annotations_per_object=len(
                     labelers)).tolist()
@@ -135,6 +136,7 @@ class Labelbox(PlatformInterface):
 
         # Consolidate points
         for k, v in keypoint_annotations_by_label.items():
+            annotation = v['annotation']
             # TODO: Improve point consolidation, likely want to do some sort of conslida
             #consolidated_keypoint =  np.mean(np.asarray(v["points"]))
             points = []

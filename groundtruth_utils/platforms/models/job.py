@@ -14,6 +14,10 @@ class Job(BaseModel):
     raw: dict
 
     @staticmethod
+    def exclude_raw():
+        return {'raw'}
+
+    @staticmethod
     def deserialize_sagemaker(raw):
         return Job(
             id=raw['LabelingJobArn'],
