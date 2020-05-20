@@ -51,7 +51,7 @@ class Annotation(BaseModel):
 
     @staticmethod
     def deserialize_labelbox(raw_label_metadata, raw_feature):
-        bounding_box_fingerprint = ['title', 'width', 'height', 'left', 'top']
+        bounding_box_fingerprint = ['title', 'bbox']
         keypoint_fingerprint = ['title', 'point']
 
         if all(attr in raw_feature for attr in bounding_box_fingerprint):
@@ -134,10 +134,10 @@ class BoundingBoxAnnotation(Annotation):
         return BoundingBoxAnnotation(
             type=AnnotationTypes.TYPE_BOUNDING_BOX,
             label=raw_feature["title"],
-            width=raw_feature["width"],
-            height=raw_feature["height"],
-            top=raw_feature["top"],
-            left=raw_feature["left"],
+            width=raw_feature["bbox"]["width"],
+            height=raw_feature["bbox"]["height"],
+            top=raw_feature["bbox"]["top"],
+            left=raw_feature["bbox"]["left"],
             raw_annotation=raw_feature,
             raw_metadata=raw_label_metadata
         )

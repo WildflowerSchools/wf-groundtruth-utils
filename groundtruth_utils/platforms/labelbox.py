@@ -44,46 +44,46 @@ class Labelbox(PlatformInterface):
 
         return row_data
 
-    @staticmethod
-    def get_annotations_by_label_from_row_data(type: str, row_data_instance: dict):
-        annotations_by_label = {}
-
-        for tagger_label_collection in row_data_instance['labels']:
-            label = json.loads(tagger_label_collection['label'])
-            if not label:
-                continue
-
-            for feature in label['objects']:
-                classifications = feature['classifications'] if 'classifications' in feature else []
-                if type == 'bbox' and 'bbox' in feature:
-                    if feature['value'] not in annotations_by_label:
-                        annotations_by_label[feature['value']] = {
-                            "classifications": [],
-                            "boxes": []
-                        }
-
-                    bbox = feature['bbox']
-                    x1 = bbox['left']
-                    y1 = bbox['top']
-                    x2 = x1 + bbox['width']
-                    y2 = y1 + bbox['height']
-                    annotations_by_label[feature['value']]["boxes"].append((x1, y1, x2, y2))
-                    annotations_by_label[feature['value']]["classifications"].extend(classifications)
-
-                elif type == 'keypoint' and 'point' in feature:
-                    if feature['value'] not in annotations_by_label:
-                        annotations_by_label[feature['value']] = {
-                            "classifications": [],
-                            "keypoints": []
-                        }
-
-                    point = feature['point']
-                    x = point['x']
-                    y = point['y']
-                    annotations_by_label[feature['value']]["keypoints"].append((x, y))
-                    annotations_by_label[feature['value']]["classifications"].extend(classifications)
-
-        return annotations_by_label
+    # @staticmethod
+    # def get_annotations_by_label_from_row_data(type: str, row_data_instance: dict):
+    #     annotations_by_label = {}
+    #
+    #     for tagger_label_collection in row_data_instance['labels']:
+    #         label = json.loads(tagger_label_collection['label'])
+    #         if not label:
+    #             continue
+    #
+    #         for feature in label['objects']:
+    #             classifications = feature['classifications'] if 'classifications' in feature else []
+    #             if type == 'bbox' and 'bbox' in feature:
+    #                 if feature['value'] not in annotations_by_label:
+    #                     annotations_by_label[feature['value']] = {
+    #                         "classifications": [],
+    #                         "boxes": []
+    #                     }
+    #
+    #                 bbox = feature['bbox']
+    #                 x1 = bbox['left']
+    #                 y1 = bbox['top']
+    #                 x2 = x1 + bbox['width']
+    #                 y2 = y1 + bbox['height']
+    #                 annotations_by_label[feature['value']]["boxes"].append((x1, y1, x2, y2))
+    #                 annotations_by_label[feature['value']]["classifications"].extend(classifications)
+    #
+    #             elif type == 'keypoint' and 'point' in feature:
+    #                 if feature['value'] not in annotations_by_label:
+    #                     annotations_by_label[feature['value']] = {
+    #                         "classifications": [],
+    #                         "keypoints": []
+    #                     }
+    #
+    #                 point = feature['point']
+    #                 x = point['x']
+    #                 y = point['y']
+    #                 annotations_by_label[feature['value']]["keypoints"].append((x, y))
+    #                 annotations_by_label[feature['value']]["classifications"].extend(classifications)
+    #
+    #     return annotations_by_label
 
     @staticmethod
     def consolidate_annotations(annotations: list):

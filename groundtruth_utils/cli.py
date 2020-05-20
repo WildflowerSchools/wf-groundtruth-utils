@@ -4,7 +4,7 @@ import json
 import os
 
 from .log import logger
-from .core import fetch_annotations, fetch_jobs, generate_image_set, generate_manifest
+from .core import fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_manifest
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
@@ -86,9 +86,11 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
 @click.command(name="generate-coco", help="Generate a coco formatted dataset from many jobs")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='sagemaker', help="platform to fetch from")
-@click.argument("coco_generate_config")
-def cli_generate_coco(platform, coco_generate_config):
-    pass
+@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
+              help="output folder, exports stored in '$OUTPUT/coco-$timestamp.json'")
+@click.argument("coco_generate_config", type=click.File('rb'))
+def cli_generate_coco(platform, output, coco_generate_config):
+    generate_coco_dataset(coco_generate_config, output, platform)
 
 
 @click_log.simple_verbosity_option(logger)
@@ -101,3 +103,4 @@ cli.add_command(list_jobs)
 cli.add_command(list_annotations)
 cli.add_command(cli_generate_image_set)
 cli.add_command(cli_generate_manifest)
+cli.add_command(cli_generate_coco)

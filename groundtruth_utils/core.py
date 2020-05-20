@@ -2,8 +2,10 @@ from datetime import datetime
 import os
 import pathlib
 
+from .coco_generator import CocoGenerator
 from .draw import draw_annotations_and_save
 from .helper import *
+from .log import logger
 
 
 def fetch_jobs(status='Completed', platform='sagemaker', limit=None):
@@ -18,7 +20,7 @@ def fetch_worker_annotations(job_name='', worker_ids=[]):
 
 def fetch_annotations(job_name, platform='sagemaker', consolidate=True):
     active_platform = get_platform(platform)
-    return active_platform.fetch_annotations(job_name)
+    return active_platform.fetch_annotations(job_name, consolidate)
 
 
 def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mode='combine', consolidate=True):
@@ -27,7 +29,7 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
         raise Exception("'%s' invalid mode, must be combine|separate")
 
     active_platform = get_platform(platform)
-    annotations = active_platform.fetch_annotations(job_name)
+    annotations = active_platform.fetch_annotations(job_name, consolidate)
 
     now = datetime.now()
     instance_output_path = "%s/%s/%s" % (output, job_name, now.strftime("%m-%d-%YT%H:%M:%S"))
@@ -50,3 +52,20 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
 def generate_manifest(s3_images_uri, platform='sagemaker', metadata=None):
     active_platform = get_platform(platform)
     return active_platform.generate_manifest(s3_images_uri, metadata=metadata)
+
+
+def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='sagemaker'):
+    now = datetime.now()
+    output_file = "%s/coco-%s.json" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
+
+    pathlib.Path(output).mkdir(parents=True, exist_ok=True)
+
+    generator = CocoGenerator(coco_generate_config, platform)
+    generator.load_data()
+    model = generator.model()
+
+    f = open(output_file, "w")
+    f.write(model.json())
+    f.close()
+
+    logger.info("Saved coco dataset to %s" % output_file)

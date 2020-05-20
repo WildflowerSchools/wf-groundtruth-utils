@@ -10,10 +10,12 @@ BASE_DEPENDENCIES = [
     'botocore>=1.15',
     'click>=7.1.1',
     'click-log>=0.3.2',
+    'jsonpath-ng>=1.5.1',
     'labelbox>=2.4',
     'numpy>=1.16.1',
     'Pillow>=7.1.2',
-    'pydantic>=1.5.1'
+    'pydantic>=1.5.1',
+    'PyYAML>=5.3.1'
 ]
 
 # TEST_DEPENDENCIES = [
