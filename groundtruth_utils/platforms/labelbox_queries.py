@@ -41,3 +41,71 @@ query GetAllAnnotations($id: ID!){
   }
 }
 """
+
+GET_IMAGE_LABELING_FRONTEND_ID = """
+query GetImageLabelingInterfaceId {
+  labelingFrontends(where:{
+    iframeUrlPath:"https://editor.labelbox.com"
+  }){
+    id
+  }
+}
+"""
+
+CONFIGURE_INTERFACE_FOR_PROJECT = """
+mutation ConfigureInterfaceFromAPI($projectId: ID!, $customizationOptions: String!, $labelingFrontendId: ID!, $organizationId: ID!) {
+    createLabelingFrontendOptions(data:{
+      customizationOptions: $customizationOptions,
+      project:{
+        connect:{
+          id: $projectId
+        }
+      }
+      labelingFrontend:{
+        connect:{
+          id:$labelingFrontendId
+        }
+      }
+      organization:{
+        connect:{
+          id: $organizationId
+        }
+      }
+    }){
+      id
+    }
+}
+"""
+
+ATTACH_DATASET_AND_FRONTEND = """
+mutation attach_dataset_and_frontend($projectId: ID!, $datasetId: ID!, $labelingFrontendId: ID!, $date: DateTime!){
+  updateProject(
+    where:{
+      id:$projectId
+    },
+    data:{
+      setupComplete: $date,
+      datasets:{
+        connect:{
+          id:$datasetId
+        }
+      },
+      labelingFrontend:{
+        connect:{
+          id:$labelingFrontendId
+        }
+      }
+    }
+  ){
+    id
+  }
+}
+"""
+
+DELETE_PROJECT = """
+mutation delete_project($projectId: ID!) {
+  deleteProject(project: {id: "ckagyny9gnwka0714utcfxrer"}) {
+    id
+  }
+}
+"""

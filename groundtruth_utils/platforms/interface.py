@@ -37,3 +37,7 @@ class PlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def generate_manifest(self, s3_images_uri: str, metadata: dict):
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def create_job(self, job_name='', attrs=None):
+        raise NotImplemented

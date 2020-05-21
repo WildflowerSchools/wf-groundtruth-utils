@@ -1,0 +1,285 @@
+{
+  "tools": [
+    {
+      "required": false,
+      "name": "Person",
+      "color": "#FF0000",
+      "tool": "rectangle",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Nose - Visible",
+      "color": "#FF0000",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Nose - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Neck - Visible",
+      "color": "#FF0000",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Neck - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Eye - Visible",
+      "color": "#7A5D00",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Eye - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Eye - Visible",
+      "color": "#7A5D00",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Eye - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Ear - Visible",
+      "color": "#7A004E",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Ear - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Ear - Visible",
+      "color": "#7A004E",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Ear - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Shoulder - Visible",
+      "color": "#0000FF",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Shoulder - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Shoulder - Visible",
+      "color": "#0000FF",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Shoulder - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Elbow - Visible",
+      "color": "#00CCFF",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Elbow - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Elbow - Visible",
+      "color": "#00CCFF",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Elbow - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Wrist - Visible",
+      "color": "#00FFCC",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Wrist - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Wrist - Visible",
+      "color": "#00FFCC",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Wrist - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Hip - Visible",
+      "color": "#00FF66",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Hip - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Hip - Visible",
+      "color": "#00FF66",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Hip - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Knee - Visible",
+      "color": "#239100",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Knee - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Knee - Visible",
+      "color": "#239100",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Knee - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Ankle - Visible",
+      "color": "#F1B700",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Left Ankle - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Ankle - Visible",
+      "color": "#F1B700",
+      "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Right Ankle - Not Visible",
+      "color": "#C4C4C4",
+      "tool": "point",
+      "classifications": []
+    }
+  ],
+  "classifications": [
+    {
+      "required": false,
+      "instructions": "Bad Image/Label?",
+      "name": "bad_image/label?",
+      "type": "checklist",
+      "options": [
+        {
+          "label": "Image poor quality",
+          "value": "image_poor_quality"
+        },
+        {
+          "label": "Person much too unclear/blurry/etc",
+          "value": "person_much_too_unclear/blurry/etc"
+        },
+        {
+          "label": "Person should not be tagged (e.g. parent)",
+          "value": "person_should_not_be_tagged_(e.g._parent)"
+        }
+      ]
+    }
+  ]
+}

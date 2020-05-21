@@ -13,6 +13,7 @@ class AnnotationTypes:
 
 
 class Annotation(BaseModel):
+    id: str
     confidence: float = None
     type: str
     classifications: List[Classification] = []
@@ -42,6 +43,7 @@ class Annotation(BaseModel):
             return BoundingBoxAnnotation.deserialize_sagemaker(raw_annotation, raw_metadata, idx)
         else:
             return Annotation(
+                id=0,
                 confidence=raw_metadata["confidence"],
                 raw_annotation=raw_annotation,
                 raw_metadata=raw_metadata,
@@ -117,6 +119,7 @@ class BoundingBoxAnnotation(Annotation):
     @staticmethod
     def deserialize_sagemaker(raw_annotation, raw_metadata, idx):
         return BoundingBoxAnnotation(
+            id=0,
             type=AnnotationTypes.TYPE_BOUNDING_BOX,
             label=raw_metadata["class-map"][str(raw_annotation["class_id"])],
             width=raw_annotation["width"],
@@ -132,6 +135,7 @@ class BoundingBoxAnnotation(Annotation):
     @staticmethod
     def deserialize_labelbox(raw_label_metadata, raw_feature):
         return BoundingBoxAnnotation(
+            id=raw_feature["featureId"],
             type=AnnotationTypes.TYPE_BOUNDING_BOX,
             label=raw_feature["title"],
             width=raw_feature["bbox"]["width"],
@@ -155,6 +159,7 @@ class KeypointAnnotation(Annotation):
     @staticmethod
     def deserialize_labelbox(raw_label_metadata, raw_feature):
         return KeypointAnnotation(
+            id=raw_feature["featureId"],
             type=AnnotationTypes.TYPE_KEYPOINT,
             label=raw_feature["title"],
             x=raw_feature["point"]["x"],

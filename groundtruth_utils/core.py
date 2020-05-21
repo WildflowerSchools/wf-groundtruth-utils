@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 import os
 import pathlib
@@ -8,7 +9,7 @@ from .helper import *
 from .log import logger
 
 
-def fetch_jobs(status='Completed', platform='sagemaker', limit=None):
+def fetch_jobs(status='Completed', platform='labelbox', limit=None):
     active_platform = get_platform(platform)
     return active_platform.fetch_jobs(status, limit or 0)
 
@@ -18,12 +19,12 @@ def fetch_worker_annotations(job_name='', worker_ids=[]):
     return
 
 
-def fetch_annotations(job_name, platform='sagemaker', consolidate=True):
+def fetch_annotations(job_name, platform='labelbox', consolidate=True):
     active_platform = get_platform(platform)
     return active_platform.fetch_annotations(job_name, consolidate)
 
 
-def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mode='combine', consolidate=True):
+def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(), mode='combine', consolidate=True):
     valid_modes = ['combine', 'separate']
     if mode.lower() not in valid_modes:
         raise Exception("'%s' invalid mode, must be combine|separate")
@@ -49,12 +50,12 @@ def generate_image_set(job_name='', platform='sagemaker', output=os.getcwd(), mo
     return
 
 
-def generate_manifest(s3_images_uri, platform='sagemaker', metadata=None):
+def generate_manifest(s3_images_uri, platform='labelbox', metadata=None):
     active_platform = get_platform(platform)
     return active_platform.generate_manifest(s3_images_uri, metadata=metadata)
 
 
-def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='sagemaker'):
+def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='labelbox'):
     now = datetime.now()
     output_file = "%s/coco-%s.json" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
 
@@ -64,8 +65,26 @@ def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='sa
     generator.load_data()
     model = generator.model()
 
-    f = open(output_file, "w")
-    f.write(model.json())
-    f.close()
+    with open(output_file, "w") as f:
+        f.write(model.json())
 
     logger.info("Saved coco dataset to %s" % output_file)
+
+
+def create_job(job_name='', platform='labelbox', ontology_file=None, dataset_id=None):
+    ontology_json = json.load(ontology_file)
+
+    platform = get_platform(platform)
+    job = platform.create_job(job_name=job_name, attrs={'ontology_json': ontology_json, 'dataset_id': dataset_id})
+    return job
+
+
+def generate_mal_ndjson(job_name='', output=os.getcwd(), platform='labelbox'):
+    # Fetch Job's Ontology and create a way to map types:values to featureSchemaIds
+    # Fetch Dataset
+    # Combine all source annotations by external_ids of dest Job
+    # Build a FeatureCollection using combined collections
+    # - Map annotations to GeoJSON format (this will change in a week)
+    # - Link features to related Ontology Schema ID
+    # Optionally upload NDJSON file?
+    pass

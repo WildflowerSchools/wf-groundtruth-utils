@@ -103,3 +103,6 @@ class Sagemaker(PlatformInterface):
             fp.close()
 
         return output
+
+    def create_job(self, job_name='', attrs=None):
+        pass

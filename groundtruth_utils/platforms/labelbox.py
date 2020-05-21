@@ -1,23 +1,37 @@
 import copy
+from datetime import datetime
 import json
 import math
 import os
 
 import cv2 as cv
-from labelbox import Client as LBClient, Project
+from labelbox import Client as LBClient, Dataset, Project
 import numpy as np
 
 from .interface import PlatformInterface
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
-from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ALL_PROJECTS_METRICS_QUERY
+from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ALL_PROJECTS_METRICS_QUERY, ATTACH_DATASET_AND_FRONTEND, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID
 from .models.annotation import AnnotationTypes
 from .models.image import ImageList, Image
 from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast
+from ..log import logger
 from ..aws.s3_util import split_s3_bucket_key
 
 
 class Labelbox(PlatformInterface):
+    @staticmethod
+    def fetch_raw_dataset_by_id(uid: str):
+        lb_client = LBClient()
+
+        dataset_list = lb_client.get_datasets(where=Dataset.uid == uid)
+        myiter = iter(dataset_list)
+        dataset = next(myiter)
+        if not dataset:
+            raise Exception("dataset not found")
+
+        return dataset
+
     @staticmethod
     def fetch_raw_project_by_name(name: str):
         lb_client = LBClient()
@@ -44,6 +58,12 @@ class Labelbox(PlatformInterface):
 
         return row_data
 
+    @staticmethod
+    def get_image_labeling_frontened_id():
+        lb_client = LBClient()
+        results = lb_client.execute(GET_IMAGE_LABELING_FRONTEND_ID)
+        # res = json.loads(results)
+        return results['labelingFrontends'][0]['id']
     # @staticmethod
     # def get_annotations_by_label_from_row_data(type: str, row_data_instance: dict):
     #     annotations_by_label = {}
@@ -128,6 +148,7 @@ class Labelbox(PlatformInterface):
 
             for box in consolidated_boxes:
                 consolidated_annotation = copy.deepcopy(annotation)
+                annotation.id = None
                 consolidated_annotation.left = box[0]
                 consolidated_annotation.top = box[1]
                 consolidated_annotation.width = box[2] - box[0]
@@ -137,8 +158,6 @@ class Labelbox(PlatformInterface):
         # Consolidate points
         for k, v in keypoint_annotations_by_label.items():
             annotation = v['annotation']
-            # TODO: Improve point consolidation, likely want to do some sort of conslida
-            #consolidated_keypoint =  np.mean(np.asarray(v["points"]))
             points = []
             if len(v["points"]) == 1:
                 points = v["points"]
@@ -151,6 +170,7 @@ class Labelbox(PlatformInterface):
 
             for point in points:
                 consolidated_annotation = copy.deepcopy(annotation)
+                annotation.id = None
                 consolidated_annotation.x = point[0]
                 consolidated_annotation.y = point[1]
                 consolidated_annotations.append(consolidated_annotation)
@@ -217,3 +237,42 @@ class Labelbox(PlatformInterface):
             })
 
         return json.dumps(items, indent=2)
+
+    def create_job(self, job_name='', attrs=None):
+        if attrs is None:
+            attrs = {}
+
+        if 'ontology_json' not in attrs or 'dataset_id' not in attrs:
+            raise Exception("create_job requires an 'ontology_json' and 'dataset_id' attributes")
+
+        labeling_frontend_id = self.__class__.get_image_labeling_frontened_id()
+
+        # Attempt to fetch dataset, will throw an exception if not founds
+        self.__class__.fetch_raw_dataset_by_id(attrs['dataset_id'])
+
+        lb_client = LBClient()
+        organization = lb_client.get_organization()
+        project = lb_client.create_project(name=job_name)
+
+        if project is None:
+            raise Exception("Could not create project '%s'" % job_name)
+
+        try:
+            lb_client.execute(ATTACH_DATASET_AND_FRONTEND, {
+                'projectId': project.uid,
+                'datasetId': attrs['dataset_id'],
+                'labelingFrontendId': labeling_frontend_id,
+                'date': datetime.now()
+            })
+
+            lb_client.execute(CONFIGURE_INTERFACE_FOR_PROJECT, {
+                'projectId': project.uid,
+                'customizationOptions': json.dumps(attrs['ontology_json']),
+                'labelingFrontendId': labeling_frontend_id,
+                'organizationId': organization.uid,
+            })
+        except Exception as e:
+            logger.error('Error at %s', 'division', exc_info=e)
+            lb_client.execute(DELETE_PROJECT, {'projectId': project.uid})
+
+        return project

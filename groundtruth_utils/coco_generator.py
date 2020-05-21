@@ -36,6 +36,7 @@ class CocoGenerator:
 
             for image_idx, image in enumerate(images.images):
                 external_id = image.external_id
+                image_as_dict = image.dict()
                 if 'externalIdPattern' in job_config:
                     r = re.compile(job_config['externalIdPattern'])
                     external_id = ''.join(re.split(r, external_id))
@@ -54,7 +55,8 @@ class CocoGenerator:
                             (image.external_id, external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['match'])
                         all_annotations += [{'annotation': match.value, 'idx': idx}
-                                            for idx, match in enumerate(jsonpath_expr.find(image.dict()['annotations']))]
+                                            for idx, match in enumerate(jsonpath_expr.find(image_as_dict['annotations']))]
+                        pass
 
                     elif annotation_config['type'] == 'keypoint':
                         logger.info("%s:%s - Fetching keypoint visible annotations for category '%s'" %
@@ -64,7 +66,7 @@ class CocoGenerator:
                             {
                                 'annotation': match.value,
                                 'visibility': KeypointAnnotation.Visibility.VISIBILITY_LABELED_VISIBLE} for match in jsonpath_expr.find(
-                                image.dict()['annotations'])]
+                                image_as_dict['annotations'])]
 
                         logger.info("%s:%s - Fetching keypoint not-visible annotations for category '%s'" %
                                     (image.external_id, external_id, annotation_config['category']))
@@ -73,7 +75,7 @@ class CocoGenerator:
                             {
                                 'annotation': match.value,
                                 'visibility': KeypointAnnotation.Visibility.VISIBILITY_LABELED_NOT_VISIBLE} for match in jsonpath_expr.find(
-                                image.dict()['annotations'])]
+                                image_as_dict['annotations'])]
 
                         logger.info("Merging annotations into data structure")
                         all_annotations += visible_annotations + not_visible_annotations
