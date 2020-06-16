@@ -4,7 +4,6 @@ from setuptools import setup, find_packages
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 VERSION = open(os.path.join(BASEDIR, 'VERSION')).read().strip()
 
-# Dependencies (format is 'PYPI_PACKAGE_NAME[>=]=VERSION_NUMBER')
 BASE_DEPENDENCIES = [
     'boto3>=1.12',
     'botocore>=1.15',
@@ -12,8 +11,9 @@ BASE_DEPENDENCIES = [
     'click-log>=0.3.2',
     'jsonpath-ng>=1.5.1',
     'labelbox>=2.4',
-    'numpy>=1.16.1',
+    'numpy>=1.18.4',
     'Pillow>=7.1.2',
+    'wf-pycocotools>=2.0.1',
     'pydantic>=1.5.1',
     'PyYAML>=5.3.1'
 ]

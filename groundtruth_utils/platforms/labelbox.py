@@ -1,110 +1,28 @@
 import copy
-from datetime import datetime
 import json
 import math
 import os
 
 import cv2 as cv
-from labelbox import Client as LBClient, Dataset, Project
+from labelbox import Client as LBClient, exceptions as LBExceptions
 import numpy as np
+from pycocotools.coco import COCO
 
 from .interface import PlatformInterface
+from .labelbox_api import LabelboxAPI
+from .labelbox_coco import coco_annotation_to_labelbox
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
-from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ALL_PROJECTS_METRICS_QUERY, ATTACH_DATASET_AND_FRONTEND, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID
+from .labelbox_queries import ALL_PROJECTS_METRICS_QUERY
 from .models.annotation import AnnotationTypes
 from .models.image import ImageList, Image
 from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast
+from ..coco.models.annotation import KeypointAnnotation as CocoKeypointAnnotation
 from ..log import logger
 from ..aws.s3_util import split_s3_bucket_key
 
 
 class Labelbox(PlatformInterface):
-    @staticmethod
-    def fetch_raw_dataset_by_id(uid: str):
-        lb_client = LBClient()
-
-        dataset_list = lb_client.get_datasets(where=Dataset.uid == uid)
-        myiter = iter(dataset_list)
-        dataset = next(myiter)
-        if not dataset:
-            raise Exception("dataset not found")
-
-        return dataset
-
-    @staticmethod
-    def fetch_raw_project_by_name(name: str):
-        lb_client = LBClient()
-
-        project_list = lb_client.get_projects(where=Project.name == name)
-        myiter = iter(project_list)
-        project = next(myiter)
-        if not project:
-            raise Exception("job not found")
-
-        return project
-
-    @staticmethod
-    def fetch_raw_project_data_rows_by_name(name: str):
-        project = Labelbox.fetch_raw_project_by_name(name)
-
-        lb_client = LBClient()
-        # TODO: loop with enumerator rather than building a list
-        row_data = list(
-            LabelboxCustomPaginatedCollection(
-                lb_client, ALL_ANNOTATIONS_QUERY, {
-                    "id": project.uid}, [
-                    "project", "dataRows"]))
-
-        return row_data
-
-    @staticmethod
-    def get_image_labeling_frontened_id():
-        lb_client = LBClient()
-        results = lb_client.execute(GET_IMAGE_LABELING_FRONTEND_ID)
-        # res = json.loads(results)
-        return results['labelingFrontends'][0]['id']
-    # @staticmethod
-    # def get_annotations_by_label_from_row_data(type: str, row_data_instance: dict):
-    #     annotations_by_label = {}
-    #
-    #     for tagger_label_collection in row_data_instance['labels']:
-    #         label = json.loads(tagger_label_collection['label'])
-    #         if not label:
-    #             continue
-    #
-    #         for feature in label['objects']:
-    #             classifications = feature['classifications'] if 'classifications' in feature else []
-    #             if type == 'bbox' and 'bbox' in feature:
-    #                 if feature['value'] not in annotations_by_label:
-    #                     annotations_by_label[feature['value']] = {
-    #                         "classifications": [],
-    #                         "boxes": []
-    #                     }
-    #
-    #                 bbox = feature['bbox']
-    #                 x1 = bbox['left']
-    #                 y1 = bbox['top']
-    #                 x2 = x1 + bbox['width']
-    #                 y2 = y1 + bbox['height']
-    #                 annotations_by_label[feature['value']]["boxes"].append((x1, y1, x2, y2))
-    #                 annotations_by_label[feature['value']]["classifications"].extend(classifications)
-    #
-    #             elif type == 'keypoint' and 'point' in feature:
-    #                 if feature['value'] not in annotations_by_label:
-    #                     annotations_by_label[feature['value']] = {
-    #                         "classifications": [],
-    #                         "keypoints": []
-    #                     }
-    #
-    #                 point = feature['point']
-    #                 x = point['x']
-    #                 y = point['y']
-    #                 annotations_by_label[feature['value']]["keypoints"].append((x, y))
-    #                 annotations_by_label[feature['value']]["classifications"].extend(classifications)
-    #
-    #     return annotations_by_label
-
     @staticmethod
     def consolidate_annotations(annotations: list):
         labelers = []
@@ -212,7 +130,7 @@ class Labelbox(PlatformInterface):
         return JobList(jobs=result)
 
     def fetch_annotations(self, job_name: str, consolidate=True):
-        row_data = self.__class__.fetch_raw_project_data_rows_by_name(job_name)
+        row_data = LabelboxAPI.fetch_raw_project_data_rows_by_name(job_name)
 
         final_images = []
         for raw_data_row in row_data:
@@ -245,10 +163,10 @@ class Labelbox(PlatformInterface):
         if 'ontology_json' not in attrs or 'dataset_id' not in attrs:
             raise Exception("create_job requires an 'ontology_json' and 'dataset_id' attributes")
 
-        labeling_frontend_id = self.__class__.get_image_labeling_frontened_id()
+        labeling_frontend_id = LabelboxAPI.get_image_labeling_frontened_id()
 
         # Attempt to fetch dataset, will throw an exception if not founds
-        self.__class__.fetch_raw_dataset_by_id(attrs['dataset_id'])
+        LabelboxAPI.fetch_raw_dataset_by_id(attrs['dataset_id'])
 
         lb_client = LBClient()
         organization = lb_client.get_organization()
@@ -258,21 +176,78 @@ class Labelbox(PlatformInterface):
             raise Exception("Could not create project '%s'" % job_name)
 
         try:
-            lb_client.execute(ATTACH_DATASET_AND_FRONTEND, {
-                'projectId': project.uid,
-                'datasetId': attrs['dataset_id'],
-                'labelingFrontendId': labeling_frontend_id,
-                'date': datetime.now()
-            })
-
-            lb_client.execute(CONFIGURE_INTERFACE_FOR_PROJECT, {
-                'projectId': project.uid,
-                'customizationOptions': json.dumps(attrs['ontology_json']),
-                'labelingFrontendId': labeling_frontend_id,
-                'organizationId': organization.uid,
-            })
+            LabelboxAPI.attach_dataset(project.uid, attrs['dataset_id'], labeling_frontend_id)
+            LabelboxAPI.configure_interface_for_project(
+                project.uid, labeling_frontend_id, organization.uid, attrs['ontology_json'])
         except Exception as e:
             logger.error('Error at %s', 'division', exc_info=e)
-            lb_client.execute(DELETE_PROJECT, {'projectId': project.uid})
+            LabelboxAPI.delete_project(project.uid)
 
         return project
+
+    def upload_coco_dataset(self, job_name, coco_annotation_file):
+        project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+        ontology = LabelboxAPI.get_project_ontology(project.uid)
+
+        coco = COCO(coco_annotation_file)
+        cat_ids = coco.getCatIds(catNms=['person'])
+        img_ids = coco.getImgIds(catIds=cat_ids)
+        for img_id in img_ids:
+            img = coco.loadImgs([img_id])
+
+            data_row = None
+            for dataset in project.datasets():
+                try:
+                    data_row = dataset.data_row_for_external_id(img[0]['file_name'])
+                except LBExceptions.ResourceNotFoundError:
+                    continue
+
+            if data_row is None:
+                logger.warn("Unable to find %s in project dataset" % (img[0]['file_name']))
+                continue
+
+            feature_ids = []
+            annotations = coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=cat_ids))
+            logger.info("Adding features to image/external_id %s" % (img[0]['file_name']))
+            for annotation in annotations:
+                keypoint_annotation = CocoKeypointAnnotation(**annotation)
+
+                labels = coco_annotation_to_labelbox(keypoint_annotation, ontology)
+                if len(labels) > 0:
+                    #project.create_label(data_row=data_row, label=json.dumps({'objects': labels}))
+                    for label in labels:
+                        # Lots of steps below just to create a label in Labelbox, phew
+                        #    project.create_label(data_row=data_row, label=labels)
+
+                        new_object_feature = LabelboxAPI.create_new_object_feature(
+                            schema_id=label['schema_id'],
+                            project_id=project.uid,
+                            datarow_id=data_row.uid,
+                            content={'geometry': label['geometry_content']})
+                        feature_ids.append(new_object_feature['id'])
+
+                        if label['nested_classification_feature'] is not None:
+                            nested_feature = LabelboxAPI.create_new_nested_classification_feature(
+                                parent_feature_id=new_object_feature['id'],
+                                question_schema_id=label['nested_classification_feature']['question_schema_id'],
+                                options_schema_ids=label['nested_classification_feature']['options_schema_ids']
+                            )
+                            feature_ids.append(nested_feature['result']['id'])
+                            if len(nested_feature['descendants']) > 0:
+                                for descendent in nested_feature['descendants']:
+                                    feature_ids.append(descendent['id'])
+
+                            classification_feature = LabelboxAPI.update_classification_options(
+                                question_feature_id=nested_feature.id,
+                                option_schema_ids=label['nested_classification_feature']['options_schema_ids']
+                            )
+                            if len(classification_feature['descendants']) > 0:
+                                for descendent in classification_feature['descendants']:
+                                    feature_ids.append(descendent['id'])
+
+            logger.info("Generating labels from features for image/external_id %s" % (img[0]['file_name']))
+            LabelboxAPI.create_label_from_features(
+                project_id=project.uid,
+                datarow_id=data_row.uid,
+                feature_ids=feature_ids
+            )

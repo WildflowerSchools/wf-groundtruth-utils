@@ -101,10 +101,10 @@ class CocoGenerator:
                                 annotation_match['annotation']['height']]
                         elif annotation_config['type'] == 'keypoint':
                             self.coco_images[external_id]['annotations'][external_annotation_id].add_keypoint(
-                                annotation_config['category'],
+                                KeypointCategory.Keypoint(annotation_config['category']),
                                 annotation_match['annotation']['x'],
                                 annotation_match['annotation']['y'],
-                                annotation_match['visibility'])
+                                KeypointAnnotation.Visibility(annotation_match['visibility']))
 
     def model(self):
         logger.info("Generating COCO model")

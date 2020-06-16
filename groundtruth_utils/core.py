@@ -88,3 +88,8 @@ def generate_mal_ndjson(job_name='', output=os.getcwd(), platform='labelbox'):
     # - Link features to related Ontology Schema ID
     # Optionally upload NDJSON file?
     pass
+
+
+def upload_coco_labels_to_job(job_name='', coco_annotation_file=None):
+    platform = get_platform('labelbox')
+    platform.upload_coco_dataset(job_name, coco_annotation_file)

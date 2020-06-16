@@ -4,7 +4,7 @@ import json
 import os
 
 from .log import logger
-from .core import fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, create_job
+from .core import create_job, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
@@ -110,10 +110,10 @@ def cli_generate_mal_ndjson(output, job_name):
 
 
 @click.command(name="upload-coco-labels-to-job", help="Load coco labels into a labelbox dataset")
-@click.option("-c", "--coco-json", type=click.File('rb'), required=True, help="Coco formatted JSON data")
+@click.option("-c", "--coco-json", type=click.Path(exists=True), required=True, help="Coco formatted JSON data")
 @click.argument("job_name")
-def upload_coco_labels_to_job(coco_json, job_name):
-    pass
+def cli_upload_coco_labels_to_job(coco_json, job_name):
+    upload_coco_labels_to_job(job_name, coco_json)
 
 
 @click_log.simple_verbosity_option(logger)
@@ -128,3 +128,4 @@ cli.add_command(cli_generate_image_set)
 cli.add_command(cli_generate_manifest)
 cli.add_command(cli_generate_coco)
 cli.add_command(cli_create_job)
+cli.add_command(cli_upload_coco_labels_to_job)
