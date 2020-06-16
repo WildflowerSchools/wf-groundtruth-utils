@@ -214,11 +214,8 @@ class Labelbox(PlatformInterface):
 
                 labels = coco_annotation_to_labelbox(keypoint_annotation, ontology)
                 if len(labels) > 0:
-                    #project.create_label(data_row=data_row, label=json.dumps({'objects': labels}))
                     for label in labels:
                         # Lots of steps below just to create a label in Labelbox, phew
-                        #    project.create_label(data_row=data_row, label=labels)
-
                         new_object_feature = LabelboxAPI.create_new_object_feature(
                             schema_id=label['schema_id'],
                             project_id=project.uid,

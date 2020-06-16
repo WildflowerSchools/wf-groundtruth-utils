@@ -59,10 +59,6 @@ class ClassificationList(BaseModel):
                 raw_classification = Classification.deserialize_labelbox(raw_classification)
                 classifications.append(raw_classification)
 
-        # classifications = []
-        # for idx, raw_classification in enumerate(raw_labels):
-        #     classifications.append(Classification.deserialize_labelbox(raw_classification))
-
         return ClassificationList(
             classifications=classifications
         )
