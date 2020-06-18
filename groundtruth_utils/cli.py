@@ -3,6 +3,7 @@ import click_log
 import json
 import os
 
+from .annotate import annotate_image
 from .log import logger
 from .core import create_job, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job
 from .platforms.models.job import Job
@@ -90,7 +91,7 @@ def cli_generate_coco(platform, output, coco_generate_config):
     generate_coco_dataset(coco_generate_config, output, platform)
 
 
-@click.command(name="create-job", help="Generate a labelbox job with an ontology and a dataset")
+@click.command(name="create-job", help="Generate a Labelbox job with an ontology and a dataset")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
 @click.option("-o", "--ontology", type=click.File('rb'), required=True, help="Labelbox Ontology JSON")
@@ -101,19 +102,26 @@ def cli_create_job(platform, ontology, dataset_id, job_name):
     click.echo(project.uid)
 
 
-@click.command(name="generate-mal-ndjson", help="Generate a model assisted labeling NDJSON file for labelmaker")
-@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
-              help="output folder, exports stored in '$OUTPUT/labelmaker-mal-$timestamp.ndjson'")
-@click.argument("job_name")
-def cli_generate_mal_ndjson(output, job_name):
-    generate_mal_ndjson(job_name, output, 'labelbox')
-
-
-@click.command(name="upload-coco-labels-to-job", help="Load coco labels into a labelbox dataset")
+@click.command(name="upload-coco-labels-to-job", help="Load coco labels into a Labelbox dataset")
 @click.option("-c", "--coco-json", type=click.Path(exists=True), required=True, help="Coco formatted JSON data")
 @click.argument("job_name")
 def cli_upload_coco_labels_to_job(coco_json, job_name):
     upload_coco_labels_to_job(job_name, coco_json)
+
+
+@click.command(name="generate-mal-ndjson", help="Generate a model assisted labeling NDJSON file for Labelbox")
+@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
+              help="output folder, exports stored in '$OUTPUT/labelmaker-mal-$timestamp.ndjson'")
+@click.argument("job_name")
+def cli_generate_mal_ndjson(output, job_name):
+    generate_mal_ndjson(job_name, output)
+
+
+@click.command(name="annotate-image", help="Annotate an image")
+@click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
+def cli_annotate_image(image):
+    result = annotate_image(image)
+    click.echo(result)
 
 
 @click_log.simple_verbosity_option(logger)
@@ -129,3 +137,5 @@ cli.add_command(cli_generate_manifest)
 cli.add_command(cli_generate_coco)
 cli.add_command(cli_create_job)
 cli.add_command(cli_upload_coco_labels_to_job)
+cli.add_command(cli_generate_mal_ndjson)
+cli.add_command(cli_annotate_image)

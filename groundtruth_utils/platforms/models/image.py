@@ -51,12 +51,18 @@ class Image(BaseModel):
 
     @staticmethod
     def deserialize_labelbox(raw_data_row):
+        annotations = []
+        classifications = []
+        if 'labels' in raw_data_row:
+            annotations = AnnotationList.deserialize_labelbox(raw_data_row['labels']).annotations
+            ClassificationList.deserialize_labelbox(raw_data_row['labels']).classifications
+
         return Image(
             id=raw_data_row['id'],
             external_id=raw_data_row['externalId'],
             url=raw_data_row['rowData'],
-            annotations=AnnotationList.deserialize_labelbox(raw_data_row['labels']).annotations,
-            classifications=ClassificationList.deserialize_labelbox(raw_data_row['labels']).classifications
+            annotations=annotations,
+            classifications=classifications
         )
 
 

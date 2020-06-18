@@ -3,7 +3,7 @@ import json
 
 from labelbox import Client as LBClient, Dataset, Project
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
-from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ATTACH_DATASET_AND_FRONTEND, CREATE_LABEL_FROM_FEATURES, CREATE_NEW_NESTED_CLASSIFICATION_FEATURE, CREATE_NEW_OBJECT_FEATURE, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID, GET_PROJECT_ONTOLOGY, UPDATE_CLASSIFICATION_OPTIONS
+from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ATTACH_DATASET_AND_FRONTEND, ALL_PROJECT_IMAGES_QUERY, CREATE_LABEL_FROM_FEATURES, CREATE_NEW_NESTED_CLASSIFICATION_FEATURE, CREATE_NEW_OBJECT_FEATURE, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID, GET_PROJECT_ONTOLOGY, UPDATE_CLASSIFICATION_OPTIONS
 from ..log import logger
 
 
@@ -46,7 +46,20 @@ class LabelboxAPI(object):
         row_data = list(
             LabelboxCustomPaginatedCollection(
                 lb_client, ALL_ANNOTATIONS_QUERY, {
-                    "id": project.uid}, [
+                    "projectId": project.uid}, [
+                    "project", "dataRows"]))
+
+        return row_data
+
+    @staticmethod
+    def fetch_all_project_images(name: str):
+        project = LabelboxAPI.fetch_raw_project_by_name(name)
+
+        lb_client = LBClient()
+        row_data = list(
+            LabelboxCustomPaginatedCollection(
+                lb_client, ALL_PROJECT_IMAGES_QUERY, {
+                    "projectId": project.uid}, [
                     "project", "dataRows"]))
 
         return row_data

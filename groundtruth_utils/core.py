@@ -2,7 +2,11 @@ import json
 from datetime import datetime
 import os
 import pathlib
+import requests
+import tempfile
+import time
 
+from .annotate import annotate_image
 from .coco_generator import CocoGenerator
 from .draw import draw_annotations_and_save
 from .helper import *
@@ -79,17 +83,36 @@ def create_job(job_name='', platform='labelbox', ontology_file=None, dataset_id=
     return job
 
 
-def generate_mal_ndjson(job_name='', output=os.getcwd(), platform='labelbox'):
-    # Fetch Job's Ontology and create a way to map types:values to featureSchemaIds
-    # Fetch Dataset
-    # Combine all source annotations by external_ids of dest Job
-    # Build a FeatureCollection using combined collections
-    # - Map annotations to GeoJSON format (this will change in a week)
-    # - Link features to related Ontology Schema ID
-    # Optionally upload NDJSON file?
-    pass
-
-
 def upload_coco_labels_to_job(job_name='', coco_annotation_file=None):
     platform = get_platform('labelbox')
     platform.upload_coco_dataset(job_name, coco_annotation_file)
+
+
+def generate_mal_ndjson(job_name='', output=os.getcwd()):
+    now = datetime.now()
+    output_file = "%s/labelbox-mal-%s.ndjson" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
+
+    pathlib.Path(output_file).mkdir(parents=True, exist_ok=True)
+
+    platform = get_platform('labelbox')
+    labelbox_images = platform.fetch_images(job_name)
+
+    annotations = []
+    for image in labelbox_images:
+        logger.info("Downloading image %s" % (image.url))
+        tic = time.time()
+        response = requests.get(image.url)
+        logger.info('Done Downloading (t={:0.2f}s)'.format(time.time() - tic))
+
+        with tempfile.NamedTemporaryFile() as temp_image:
+            temp_image.write(response.content)  # Image.open(BytesIO(response.content))
+            temp_image.flush()
+
+            logger.info("Annotating image %s" % (image.url))
+            tic = time.time()
+            annotations.append(annotate_image(temp_image.name))
+            logger.info('Done Annotating (t={:0.2f}s)'.format(time.time() - tic))
+
+    logger.info(annotations)
+
+    logger.info("Saved labelbox model assisted label file to %s" % output_file)

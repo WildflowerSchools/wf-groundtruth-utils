@@ -17,15 +17,15 @@ query ProjectLabelingMetrics {
 """
 
 ALL_ANNOTATIONS_QUERY = """
-query GetAllAnnotations($id: ID!){
-  project(where:{id: $id}){
+query GetAllAnnotations($projectId: ID!){
+  project(where:{id: $projectId}){
     dataRows(skip: %d, first: %d) {
       id
       externalId
       rowData
       labels(first: 100, where: {
         project: {
-            id: $id
+            id: $projectId
         }
        }) {
         id
@@ -37,6 +37,20 @@ query GetAllAnnotations($id: ID!){
         agreement
         label
       }
+    }
+  }
+}
+"""
+
+ALL_PROJECT_IMAGES_QUERY = """
+query AllProjectImages($projectId: ID!) {
+    project (where:
+        {id: $projectId}
+    ) {
+    dataRows(skip: %d, first: %d) {
+      id
+      externalId
+      rowData
     }
   }
 }

@@ -143,6 +143,16 @@ class Labelbox(PlatformInterface):
 
         return ImageList(images=final_images)
 
+    def fetch_images(self, job_name: str):
+        row_data = LabelboxAPI.fetch_all_project_images(job_name)
+
+        final_images = []
+        for raw_data_row in row_data:
+            image = Image.deserialize_labelbox(raw_data_row)
+            final_images.append(image)
+
+        return final_images
+
     def generate_manifest(self, s3_images_uri: str, metadata: dict):
         folder_object_uris = self.__class__.list_images_in_s3_folder(s3_images_uri)
 
@@ -248,3 +258,6 @@ class Labelbox(PlatformInterface):
                 datarow_id=data_row.uid,
                 feature_ids=feature_ids
             )
+
+    def generate_mal_ndjson(self, coco_dataset):
+        pass
