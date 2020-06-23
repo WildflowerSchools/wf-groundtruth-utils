@@ -13,6 +13,7 @@ BASE_DEPENDENCIES = [
     'jsonpath-ng>=1.5.1',
     'labelbox>=2.4',
     'mxnet-mkl>=1.4.0',
+    'ndjson>=0.3.1',
     'numpy>=1.18.4',
     'Pillow>=7.1.2',
     'wf-pycocotools>=2.0.1',

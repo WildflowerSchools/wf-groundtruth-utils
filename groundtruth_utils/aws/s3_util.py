@@ -1,5 +1,11 @@
 import io
+import os
 import re
+
+import boto3
+from botocore.exceptions import ClientError
+
+from ..log import logger
 
 
 def download_fileobj_as_bytestream(s3_client, object_uri):
@@ -62,3 +68,41 @@ def list_object_keys_in_folder(s3_client, folder_uri, filter_regex=None, image_f
                     bucket_object_list.append(key_string)
 
     return bucket_object_list
+
+
+def create_presigned_url(bucket_name, object_name, expiration=3600):
+    """Generate a presigned URL to share an S3 object
+
+    :param bucket_name: string
+    :param object_name: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string. If error, returns None.
+    """
+
+    # Generate a presigned URL for the S3 object
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name,
+                                                            'Key': object_name},
+                                                    ExpiresIn=expiration)
+    except ClientError as e:
+        logger.error(e)
+        return None
+
+    # The response contains the presigned URL
+    return response
+
+
+def upload_file_to_bucket(file_path, bucket, object_name=None, meta_data={}):
+    if object_name is None:
+        object_name = os.path.basename(file_path)
+
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.upload_file(file_path, bucket, object_name, ExtraArgs={'Metadata': meta_data})
+    except ClientError as e:
+        logger.error(e)
+        return None
+
+    return create_presigned_url(bucket, object_name)

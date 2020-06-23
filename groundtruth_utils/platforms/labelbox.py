@@ -2,6 +2,7 @@ import copy
 import json
 import math
 import os
+import uuid
 
 import cv2 as cv
 from labelbox import Client as LBClient, exceptions as LBExceptions
@@ -17,9 +18,12 @@ from .models.annotation import AnnotationTypes
 from .models.image import ImageList, Image
 from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast
+from .utils.util import random_id
 from ..coco.models.annotation import KeypointAnnotation as CocoKeypointAnnotation
 from ..log import logger
 from ..aws.s3_util import split_s3_bucket_key
+
+MAL_NAMESPACE = uuid.UUID('ac64f513-98cd-4c82-8a5b-2c9842240659')
 
 
 class Labelbox(PlatformInterface):
@@ -230,7 +234,7 @@ class Labelbox(PlatformInterface):
                             schema_id=label['schema_id'],
                             project_id=project.uid,
                             datarow_id=data_row.uid,
-                            content={'geometry': label['geometry_content']})
+                            content={'geometry': label['geo_json']})
                         feature_ids.append(new_object_feature['id'])
 
                         if label['nested_classification_feature'] is not None:
@@ -259,5 +263,71 @@ class Labelbox(PlatformInterface):
                 feature_ids=feature_ids
             )
 
-    def generate_mal_ndjson(self, coco_dataset):
-        pass
+    def delete_unlabeled_features(self, job_name):
+        project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+        data_rows = LabelboxAPI.fetch_all_project_images(job_name)
+
+        for data_row in data_rows:
+            features = LabelboxAPI.fetch_all_features_for_datarow(project.uid, data_row['id'])
+
+            logger.info('Deleting features for dataRow %s' % data_row['id'])
+            for feature in features:
+                if feature['label'] is None:
+                    logger.info('Deleting feature %s...' % feature['id'])
+                    LabelboxAPI.delete_feature(feature['id'])
+                else:
+                    logger.info(
+                        'NOT deleting feature %s. Feature has associated label: %s' %
+                        (feature['id'], feature['label']['id']))
+
+    def generate_mal_ndjson(self, job_name, annotations, deleteFeatures=False):
+        """Annotations object format: [{'image': Coco.Image, 'annotations': Coco.Annotation}]"""
+
+        if deleteFeatures:
+            self.delete_unlabeled_features(job_name)
+
+        project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+        ontology = LabelboxAPI.get_project_ontology(project.uid)
+
+        mal_records = []
+        for annotation in annotations:
+            data_row = None
+            for dataset in project.datasets():
+                try:
+                    data_row = dataset.data_row_for_external_id('test_person.jpg')  # annotation['image'].file_name)
+                except LBExceptions.ResourceNotFoundError:
+                    continue
+
+            if data_row is None:
+                logger.warn("Unable to find %s in project dataset" % (annotation['image'].file_name))
+                continue
+
+            for coco_annotation in annotation['annotations']:
+                labels = coco_annotation_to_labelbox(coco_annotation, ontology)
+                for label in labels:
+                    mal_records.append({
+                        **{
+                            "uuid": str(uuid.uuid5(MAL_NAMESPACE, "%s_%s_%s" % (label['schema_id'], data_row.uid, json.dumps(label['labelbox_geom'])))),
+                            "schemaId": label['schema_id'],
+                            "dataRow": {
+                                "id": data_row.uid,
+                            },
+                        },
+                        **label['labelbox_geom']
+                    })
+
+        return mal_records
+
+    def create_mal_import_job(self, job_name, mal_file_url):
+        project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+
+        import_id = random_id(32)
+        logger.info("Creating import job: %s" % import_id)
+        LabelboxAPI.create_mal_import_request(project.uid, import_id, mal_file_url)
+
+        return import_id
+
+    def get_status_mal_import_job(self, job_name, import_id):
+        project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+
+        return LabelboxAPI.get_status_mal_import_request(project.uid, import_id)

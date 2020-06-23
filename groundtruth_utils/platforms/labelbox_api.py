@@ -3,7 +3,7 @@ import json
 
 from labelbox import Client as LBClient, Dataset, Project
 from .labelbox_custom_pagination import LabelboxCustomPaginatedCollection
-from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ATTACH_DATASET_AND_FRONTEND, ALL_PROJECT_IMAGES_QUERY, CREATE_LABEL_FROM_FEATURES, CREATE_NEW_NESTED_CLASSIFICATION_FEATURE, CREATE_NEW_OBJECT_FEATURE, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID, GET_PROJECT_ONTOLOGY, UPDATE_CLASSIFICATION_OPTIONS
+from .labelbox_queries import ALL_ANNOTATIONS_QUERY, ATTACH_DATASET_AND_FRONTEND, ALL_FEATURES_FOR_DATAROW_QUERY, ALL_PROJECT_IMAGES_QUERY, CREATE_LABEL_FROM_FEATURES, CREATE_MAL_IMPORT_REQUEST, CREATE_NEW_NESTED_CLASSIFICATION_FEATURE, CREATE_NEW_OBJECT_FEATURE, CONFIGURE_INTERFACE_FOR_PROJECT, DELETE_FEATURE, DELETE_PROJECT, GET_IMAGE_LABELING_FRONTEND_ID, GET_PROJECT_ONTOLOGY, GET_STATUS_MAL_IMPORT_REQUEST, UPDATE_CLASSIFICATION_OPTIONS
 from ..log import logger
 
 
@@ -142,6 +142,28 @@ class LabelboxAPI(object):
         return output['createLabelFromFeatures']
 
     @staticmethod
+    def fetch_all_features_for_datarow(project_id: str, datarow_id: str):
+        lb_client = LBClient()
+
+        features = list(
+            LabelboxCustomPaginatedCollection(
+                lb_client, ALL_FEATURES_FOR_DATAROW_QUERY, {
+                    "projectId": project_id,
+                    "dataRowId": datarow_id
+                }, ["project", "featuresForDataRow"]))
+
+        return features
+
+    @staticmethod
+    def delete_feature(feature_id: str):
+        lb_client = LBClient()
+        result = lb_client.execute(DELETE_FEATURE, {
+            'featureId': feature_id
+        })
+
+        return result['deleteFeature']
+
+    @staticmethod
     def attach_dataset(project_uid: str, dataset_id: str, labeling_frontend_id: str):
         lb_client = LBClient()
         lb_client.execute(ATTACH_DATASET_AND_FRONTEND, {
@@ -161,3 +183,24 @@ class LabelboxAPI(object):
             'labelingFrontendId': labeling_frontend_id,
             'organizationId': organization_uid
         })
+
+    @staticmethod
+    def create_mal_import_request(project_uid: str, import_id: str, file_url: str):
+        lb_client = LBClient()
+        output = lb_client.execute(CREATE_MAL_IMPORT_REQUEST, {
+            'projectId': project_uid,
+            'importName': import_id,
+            'fileUrl': file_url
+        })
+
+        return output['createBulkImportRequest']['id']
+
+    @staticmethod
+    def get_status_mal_import_request(project_uid: str, import_id: str):
+        lb_client = LBClient()
+        output = lb_client.execute(GET_STATUS_MAL_IMPORT_REQUEST, {
+            'projectId': project_uid,
+            'importName': import_id
+        })
+
+        return output

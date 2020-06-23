@@ -5,7 +5,7 @@ import os
 
 from .annotate import annotate_image
 from .log import logger
-from .core import create_job, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job
+from .core import create_job, delete_mals, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job, upload_mal_ndjson, status_mal_ndjson
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
@@ -109,19 +109,53 @@ def cli_upload_coco_labels_to_job(coco_json, job_name):
     upload_coco_labels_to_job(job_name, coco_json)
 
 
-@click.command(name="generate-mal-ndjson", help="Generate a model assisted labeling NDJSON file for Labelbox")
+@click.command(name="generate-mal-ndjson", help="Generate a model assisted labeling ndJSON file for Labelbox")
 @click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
               help="output folder, exports stored in '$OUTPUT/labelmaker-mal-$timestamp.ndjson'")
+@click.option('--upload', is_flag=True, default=False, help="Upload the ndJSON file after it's generated")
 @click.argument("job_name")
-def cli_generate_mal_ndjson(output, job_name):
-    generate_mal_ndjson(job_name, output)
+@click.pass_context
+def cli_generate_mal_ndjson(ctx, output, job_name, upload):
+    file_name = generate_mal_ndjson(job_name, output)
+
+    if upload and file_name:
+        ctx.invoke(cli_upload_mal_ndjson, mal_file=file_name, job_name=job_name)
+
+
+@click.command(name="upload-mal-ndjson", help="Upload a MAL ndJSON file to a labelbox job")
+@click.option("-m", "--mal-file", type=click.Path(exists=True), required=True,
+              help="ndJSON formatted file for Labelbox MAL annotations")
+@click.argument("job_name")
+def cli_upload_mal_ndjson(mal_file, job_name):
+    import_id = upload_mal_ndjson(job_name, mal_file)
+    if import_id is not None:
+        click.echo("Started MAL import job: %s" % (import_id))
+
+
+@click.command(name="status-mal-ndjson", help="Check the status of a MAL ndJSON import job")
+@click.option("-i", "--import-id", type=str, required=True, help="ndJSON import ID")
+@click.argument("job_name")
+def cli_status_mal_ndjson(import_id, job_name):
+    status = status_mal_ndjson(job_name, import_id)
+    if status is not None:
+        click.echo(json.dumps(status, indent=4))
+
+
+@click.command(name="delete-mals", help="Delete Model Assisted Label")
+@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
+              help="output folder, ndjson delete file stored in '$OUTPUT/labelmaker-mal-delete-$timestamp.ndjson'")
+@click.option("-m", "--mal-files", type=click.Path(exists=True), required=True, multiple=True,
+              help="ndJSON formatted file(s) for Labelbox MAL annotations, multiple allowed")
+@click.argument("job_name")
+def cli_delete_mals(mal_files, output, job_name):
+    delete_mals(job_name, output, mal_files)
 
 
 @click.command(name="annotate-image", help="Annotate an image")
 @click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
 def cli_annotate_image(image):
     result = annotate_image(image)
-    click.echo(result)
+    click.echo(json.dumps(result, indent=4))
 
 
 @click_log.simple_verbosity_option(logger)
@@ -138,4 +172,7 @@ cli.add_command(cli_generate_coco)
 cli.add_command(cli_create_job)
 cli.add_command(cli_upload_coco_labels_to_job)
 cli.add_command(cli_generate_mal_ndjson)
+cli.add_command(cli_upload_mal_ndjson)
+cli.add_command(cli_status_mal_ndjson)
+cli.add_command(cli_delete_mals)
 cli.add_command(cli_annotate_image)

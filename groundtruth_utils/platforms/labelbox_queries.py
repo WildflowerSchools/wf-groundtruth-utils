@@ -249,3 +249,89 @@ mutation CreateLabelFromFeatures($projectId: ID!, $dataRowId: ID!, $featureIds: 
   }
 }
 """
+
+_ALL_FEATURES_FOR_DATAROW_QUERY = """
+query GetExistingFeatures($projectId: ID!, $dataRowId: ID!) {
+  project(where: {id: $projectId}) {
+    id
+    dataRows{
+      id
+    }
+    featuresForDataRow(where: {dataRow: {id: $dataRowId}}, skip: %d, first: %d) {
+      ...FeatureCacheFields
+      content
+      createdAt
+      createdBy {
+        id
+        name
+      }
+      schema {
+        id
+        kind
+        definition
+        __typename
+      }
+      parent {
+        id
+        __typename
+      }
+      children {
+        id
+        __typename
+      }
+      label {
+        id
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+"""
+
+ALL_FEATURES_FOR_DATAROW_QUERY = """
+{all_features_for_datarow_query}
+{feature_cache_fields}
+""".format(all_features_for_datarow_query=_ALL_FEATURES_FOR_DATAROW_QUERY, feature_cache_fields=_FEATURE_CACHE_FIELDS_FRAGMENT)
+
+DELETE_FEATURE = """
+mutation DeleteFeature($featureId: ID!) {
+    deleteFeature(feature: {id: $featureId}) {
+        id
+        deleted
+        project {
+            id
+            name
+        }
+        dataRow {
+            id
+        }
+    }
+}
+"""
+
+CREATE_MAL_IMPORT_REQUEST = """
+mutation CreateMALImportRequest($projectId: ID!, $importName: String!, $fileUrl: String!) {
+    createBulkImportRequest(data: {
+            projectId: $projectId,
+            name: $importName,
+            fileUrl: $fileUrl}) {
+        id
+    }
+}
+"""
+
+GET_STATUS_MAL_IMPORT_REQUEST = """
+query StatusMALImportRequest($projectId: ID!, $importName: String!) {
+    bulkImportRequest(where: {
+            projectId: $projectId,
+            name: $importName}) {
+        id
+        name
+        state
+        statusFileUrl
+        errorFileUrl
+    }
+}
+"""

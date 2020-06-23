@@ -90,7 +90,7 @@ class CocoOntologyTool(object):
 
     def __determine_keypoint_type(self):
         # First test for ontology type ONTOLOGY_TYPE_KEYPOINT_VISIBILITY_FLATTENED
-        r = re.compile(r'^([A-z0-9\s]+) - (Visible|Not\sVisible)$', re.IGNORECASE)
+        r = re.compile(r'^([A-z0-9\s]+) - (Visible|Not\sVisible).*', re.IGNORECASE)
         m = r.match(self.tool['name'])
         if m is not None:
             self.type = LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_KEYPOINT_VISIBILITY_FLATTENED
@@ -274,7 +274,8 @@ def coco_annotation_to_labelbox(coco_annotation: KeypointAnnotation, normalized_
 
             labels.append({
                 'schema_id': tool['featureSchemaId'],
-                'geometry_content': labelbox_geom_to_geojson(labelbox_geom),
+                'labelbox_geom': labelbox_geom,
+                'geo_json': labelbox_geom_to_geojson(labelbox_geom),
                 'nested_classification_feature': coco_ontology_tool.get_nested_classification(coco_annotation)
             })
 
