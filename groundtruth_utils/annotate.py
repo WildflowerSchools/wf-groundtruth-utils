@@ -15,7 +15,8 @@ def annotate_image(image_path):
         num_joints=33, norm_layer=mx.gluon.nn.BatchNorm,
         norm_kwargs={'use_global_stats': False})
     # alphapose_net.load_parameters(get_model_file(full_name, tag=pretrained, root=root))
-    alphapose_net.load_parameters("../ignore/models/duc_se.params")
+    # TODO: Download alphapose mxnet params file and cache it
+    alphapose_net.load_parameters("./ignore/models/duc_se.params")
 
     detector.reset_class(["person"], reuse_weights=['person'])
 
@@ -30,6 +31,9 @@ def annotate_image(image_path):
     # Filter bounding box detections by threshold
     np_scores = scores.asnumpy()
     np_threshold_indices = np.where(np_scores[:, :, 0] > bbox_threshold)
+
+    if len(np_threshold_indices[0]) == 0:
+        return []
 
     filtered_scores = scores[np_threshold_indices]
     filtered_boxes = bounding_boxes[np_threshold_indices]
