@@ -155,7 +155,10 @@ def cli_delete_mals(mal_files, output, job_name):
 @click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
 def cli_annotate_image(image):
     result = annotate_image(image)
-    click.echo(json.dumps(result, indent=4))
+    if result is not None:
+        click.echo(json.dumps(result, indent=4))
+    else:
+        logger.error('Annotation returned unexpected result, exiting')
 
 
 @click_log.simple_verbosity_option(logger)

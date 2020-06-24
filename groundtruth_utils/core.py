@@ -121,6 +121,10 @@ def generate_mal_ndjson(job_name='', output=os.getcwd()):
             logger.info("Annotating image %s" % (image.url))
             tic = time.time()
             annotations = annotate_image(temp_image.name)
+            if annotations is None:
+                logger.error('Annotation returned unexpected result, exiting')
+                return None
+
             coco_annotations = []
             for annotation in annotations:
                 coco_keypoint = CocoKeypointAnnotation(

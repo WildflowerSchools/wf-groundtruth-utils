@@ -194,7 +194,7 @@ class Labelbox(PlatformInterface):
             LabelboxAPI.configure_interface_for_project(
                 project.uid, labeling_frontend_id, organization.uid, attrs['ontology_json'])
         except Exception as e:
-            logger.error('Error at %s', 'division', exc_info=e)
+            logger.error('Error at %s', 'project setup', exc_info=e)
             LabelboxAPI.delete_project(project.uid)
 
         return project

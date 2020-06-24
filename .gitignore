@@ -13,3 +13,5 @@ output
 tasks/*/build
 
 generate_coco_config.yml
+
+pytorch-YOLOv4
