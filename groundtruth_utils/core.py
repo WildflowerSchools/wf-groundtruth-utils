@@ -8,7 +8,7 @@ import tempfile
 import time
 import uuid
 
-from .annotate import annotate_image
+from .annotate import Annotate
 from .aws.s3_util import upload_file_to_bucket
 from .coco.models.annotation import KeypointAnnotation as CocoKeypointAnnotation
 from .coco.models.category import KeypointCategory as CocoKeypointCategory
@@ -103,6 +103,8 @@ def generate_mal_ndjson(job_name='', output=os.getcwd()):
     platform = get_platform('labelbox')
     labelbox_images = platform.fetch_images(job_name)
 
+    annotator = Annotate()
+
     final_annotations = []
     for image_idx, image in enumerate(labelbox_images):
         logger.info("Downloading image %s" % (image.url))
@@ -120,7 +122,11 @@ def generate_mal_ndjson(job_name='', output=os.getcwd()):
 
             logger.info("Annotating image %s" % (image.url))
             tic = time.time()
-            annotations = annotate_image(temp_image.name)
+            annotations = annotator.annotate_image(temp_image.name)
+            if annotations is None:
+                logger.error('Annotation returned unexpected result, exiting')
+                return None
+
             coco_annotations = []
             for annotation in annotations:
                 coco_keypoint = CocoKeypointAnnotation(

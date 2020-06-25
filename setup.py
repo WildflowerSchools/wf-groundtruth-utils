@@ -9,6 +9,7 @@ BASE_DEPENDENCIES = [
     'botocore>=1.15',
     'click>=7.1.1',
     'click-log>=0.3.2',
+    'googledrivedownloader>=0.4',
     'gluoncv>=0.7.0',
     'jsonpath-ng>=1.5.1',
     'labelbox>=2.4',
@@ -18,7 +19,8 @@ BASE_DEPENDENCIES = [
     'Pillow>=7.1.2',
     'wf-pycocotools>=2.0.1',
     'pydantic>=1.5.1',
-    'PyYAML>=5.3.1'
+    'PyYAML>=5.3.1',
+    'wf-pytorch-yolo-v4>=0.1.1'
 ]
 
 # TEST_DEPENDENCIES = [
@@ -35,6 +37,9 @@ setup(
     name='wf-groundtruth-labeling',
     packages=find_packages(),
     version=VERSION,
+    # dependency_links=[
+    #     "%s%s" % ('file://', os.path.join(os.getcwd(), 'pytorch-YOLOv4#egg=pytorch-yolo-v4-0.1.0'))
+    # ],
     include_package_data=True,
     description='Tools for processing sagemaker/labelbox labeling jobs',
     long_description=open('README.md').read(),

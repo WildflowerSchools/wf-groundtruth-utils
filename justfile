@@ -1,5 +1,5 @@
 build:
-    pip install -e .
+    python setup.py install
 
 install-dev:
     pip install -e .[development]
