@@ -2,7 +2,9 @@ import os
 import platform
 
 
-# data_dir_default & data_dir inspired by mxnet's method of downloading and caching models: https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/base.py
+# data_dir_default & data_dir inspired by mxnet's method of downloading
+# and caching models:
+# https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/base.py
 def data_dir_default():
     """
     :return: default data directory depending on the platform and environment variables

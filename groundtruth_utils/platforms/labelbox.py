@@ -294,7 +294,8 @@ class Labelbox(PlatformInterface):
             data_row = None
             for dataset in project.datasets():
                 try:
-                    data_row = dataset.data_row_for_external_id(annotation['image'].file_name)  # annotation['image'].file_name)
+                    data_row = dataset.data_row_for_external_id(
+                        annotation['image'].file_name)  # annotation['image'].file_name)
                 except LBExceptions.ResourceNotFoundError:
                     continue
 

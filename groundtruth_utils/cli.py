@@ -3,7 +3,7 @@ import click_log
 import json
 import os
 
-from .annotate import annotate_image
+from .annotate import Annotate
 from .log import logger
 from .core import create_job, delete_mals, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job, upload_mal_ndjson, status_mal_ndjson
 from .platforms.models.job import Job
@@ -154,7 +154,9 @@ def cli_delete_mals(mal_files, output, job_name):
 @click.command(name="annotate-image", help="Annotate an image")
 @click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
 def cli_annotate_image(image):
-    result = annotate_image(image)
+    annotator = Annotate()
+    result = annotator.annotate_image(image)
+
     if result is not None:
         click.echo(json.dumps(result, indent=4))
     else:
