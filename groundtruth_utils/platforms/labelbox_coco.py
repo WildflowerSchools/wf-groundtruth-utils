@@ -2,7 +2,7 @@ from enum import Enum, IntEnum
 import re
 
 from ..coco.models.annotation import KeypointAnnotation
-from ..coco.models.category import KeypointCategory
+from ..coco.models.category import KeypointCategory, get_coco_category_by_id
 from .labelbox_utils import labelbox_geom_to_geojson
 
 
@@ -246,6 +246,13 @@ class CocoOntologyTool(object):
 
     def to_labelbox_geometry_format(self, coco_keypoint):
         if self.is_bounding_box():
+            category = get_coco_category_by_id(coco_keypoint.category_id)
+            if category is None:
+                return None
+
+            if self.box_classification.lower() != category.name.lower():
+                return None
+
             coco_box = coco_keypoint.get_bounding_box()
             return {
                 "bbox": {

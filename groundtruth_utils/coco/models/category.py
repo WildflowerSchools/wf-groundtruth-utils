@@ -4,6 +4,14 @@ from pydantic import BaseModel
 from typing import List
 
 
+def get_coco_category_by_id(id):
+    category = [p for p in all_coco_categories() if p.id == id]
+    if len(category) > 0:
+        return category[0]
+    else:
+        return None
+
+
 def get_coco_category(name):
     category = [p for p in all_coco_categories() if p.name.lower() == name.lower()]
     if len(category) > 0:
