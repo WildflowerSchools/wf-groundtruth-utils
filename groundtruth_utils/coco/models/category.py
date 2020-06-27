@@ -4,13 +4,46 @@ from pydantic import BaseModel
 from typing import List
 
 
-class Category(BaseModel):
+def get_coco_category(name):
+    category = [p for p in all_coco_categories() if p.name.lower() == name.lower()]
+    if len(category) > 0:
+        return category[0]
+    else:
+        return None
+
+
+def all_coco_categories():
+    return [
+        KeypointCategory(
+            id=1,
+            name="person",
+            supercategory="person",
+            keypoints=KeypointCategory.coco_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_person_skeleton()
+        ),
+        KeypointCategory(
+            id=2,
+            name="adult",
+            supercategory="person",
+            keypoints=KeypointCategory.coco_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_person_skeleton()
+        ),
+        KeypointCategory(
+            id=3,
+            name="child",
+            supercategory="person",
+            keypoints=KeypointCategory.coco_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_person_skeleton()
+        )]
+
+
+class BaseCategory(BaseModel):
     id: int
     name: str
     supercategory: str
 
 
-class KeypointCategory(Category):
+class KeypointCategory(BaseCategory):
     keypoints: List[str]
     skeleton: List[List[int]]
 
@@ -64,16 +97,6 @@ class KeypointCategory(Category):
             return None
 
     setattr(Keypoint, '__new__', KeypointLookup)
-
-    @staticmethod
-    def coco_person_category():
-        return KeypointCategory(
-            id=1,
-            name="person",
-            supercategory="person",
-            keypoints=KeypointCategory.coco_person_keypoint_categories(),
-            skeleton=KeypointCategory.coco_person_skeleton()
-        )
 
     @staticmethod
     def coco_person_keypoint_categories():

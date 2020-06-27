@@ -20,6 +20,7 @@ from .models.job import JobList, Job
 from .utils.bounding_box import non_max_suppression_fast
 from .utils.util import random_id
 from ..coco.models.annotation import KeypointAnnotation as CocoKeypointAnnotation
+from ..coco.models.category import all_coco_categories
 from ..log import logger
 from ..aws.s3_util import split_s3_bucket_key
 
@@ -204,7 +205,7 @@ class Labelbox(PlatformInterface):
         ontology = LabelboxAPI.get_project_ontology(project.uid)
 
         coco = COCO(coco_annotation_file)
-        cat_ids = coco.getCatIds(catNms=['person'])
+        cat_ids = coco.getCatIds(catNms=list(map(lambda x: x.name.lower(), all_coco_categories())))
         img_ids = coco.getImgIds(catIds=cat_ids)
         for img_id in img_ids:
             img = coco.loadImgs([img_id])
@@ -280,30 +281,62 @@ class Labelbox(PlatformInterface):
                         'NOT deleting feature %s. Feature has associated label: %s' %
                         (feature['id'], feature['label']['id']))
 
-    def generate_mal_ndjson(self, job_name, annotations, deleteFeatures=False):
+    def generate_mal_ndjson(self, job_name, coco_model):
         """Annotations object format: [{'image': Coco.Image, 'annotations': Coco.Annotation}]"""
-
-        if deleteFeatures:
-            self.delete_unlabeled_features(job_name)
-
         project = LabelboxAPI.fetch_raw_project_by_name(job_name)
         ontology = LabelboxAPI.get_project_ontology(project.uid)
 
         mal_records = []
-        for annotation in annotations:
+        max_retries = 3
+        for coco_image in coco_model.images:
             data_row = None
-            for dataset in project.datasets():
+
+            retry = 0
+
+            datasets = []
+            while retry <= max_retries:
                 try:
-                    data_row = dataset.data_row_for_external_id(
-                        annotation['image'].file_name)  # annotation['image'].file_name)
-                except LBExceptions.ResourceNotFoundError:
-                    continue
+                    datasets = []
+                    for dataset in project.datasets():
+                        datasets.append(dataset)
+                    break
+                except LBExceptions.LabelboxError as e:
+                    if retry >= max_retries:
+                        raise e
+                    else:
+                        retry += 1
+                        logger.error(
+                            "Encountered a connection error fetching datasets, retrying (%d/%d)" %
+                            (retry, max_retries))
+
+            for dataset in datasets:
+                retry = 0
+
+                while retry <= max_retries:
+                    try:
+                        data_row = dataset.data_row_for_external_id(
+                            coco_image.file_name)  # annotation['image'].file_name)
+                        break
+                    except LBExceptions.ResourceNotFoundError:
+                        break
+                    except LBExceptions.LabelboxError as e:
+                        if retry >= max_retries:
+                            raise e
+                        else:
+                            retry += 1
+                            logger.error(
+                                "Encountered a connection error fetching data rows, retrying (%d/%d)" %
+                                (retry, max_retries))
+
+                if data_row is not None:
+                    break
 
             if data_row is None:
-                logger.warn("Unable to find %s in project dataset" % (annotation['image'].file_name))
+                logger.warn("Unable to find %s in project dataset" % (coco_image.file_name))
                 continue
 
-            for coco_annotation in annotation['annotations']:
+            logger.info("Generating ndjson records for %s (data_row id: %s)" % (coco_image.file_name, data_row.uid))
+            for coco_annotation in coco_model.get_annotations_for_image(coco_image.id):
                 labels = coco_annotation_to_labelbox(coco_annotation, ontology)
                 for label in labels:
                     mal_records.append({
@@ -319,8 +352,11 @@ class Labelbox(PlatformInterface):
 
         return mal_records
 
-    def create_mal_import_job(self, job_name, mal_file_url):
+    def create_mal_import_job(self, job_name, mal_file_url, deleteFeatures):
         project = LabelboxAPI.fetch_raw_project_by_name(job_name)
+
+        if deleteFeatures:
+            self.delete_unlabeled_features(job_name)
 
         import_id = random_id(32)
         logger.info("Creating import job: %s" % import_id)

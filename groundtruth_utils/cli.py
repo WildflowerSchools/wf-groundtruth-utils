@@ -27,7 +27,7 @@ def validate_json(ctx, param, value):
 @click.option("-s", "--status", type=click.Choice(['inprogress', 'completed', 'failed',
                                                    'stopping', 'stopped']), default='completed', help="show jobs by status")
 @click.option("-l", "--limit", type=int, default=None, help="limit number of jobs returned")
-@click.option('--raw', is_flag=False, help="print raw data from platform source")
+@click.option('--raw', is_flag=True, default=False, help="include raw data fields from platform source")
 def list_jobs(platform, status, limit, raw):
     jobs = fetch_jobs(platform=platform, status=status, limit=limit)
     output_args = {'indent': 2}
@@ -41,7 +41,7 @@ def list_jobs(platform, status, limit, raw):
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
 @click.option('--raw', is_flag=False, help="print raw data from platform source")
-@click.option('--no-consolidate', is_flag=False,
+@click.option('--no-consolidate', is_flag=True, default=False,
               help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
 @click.argument("job_name")
 def list_annotations(platform, no_consolidate, raw, job_name):
@@ -62,13 +62,15 @@ def list_annotations(platform, no_consolidate, raw, job_name):
               help="output folder, exports stored in '$OUTPUT/$job_name/$timestamp'")
 @click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine',
               help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
-@click.option('--no-consolidate', is_flag=False,
+@click.option('--no-consolidate', is_flag=True, default=False,
               help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
+@click.option('--naked', is_flag=True, default=False,
+              help="default action is to draw geoms on top of image, naked can be used to generate 'naked' images without any drawn geoms")
 # TODO: Consider adding confidence filter
 @click.argument("job_name")
-def cli_generate_image_set(platform, output, mode, no_consolidate, job_name):
+def cli_generate_image_set(platform, output, mode, no_consolidate, naked, job_name):
     consolidate = not no_consolidate
-    generate_image_set(job_name, platform=platform, output=output, mode=mode, consolidate=consolidate)
+    generate_image_set(job_name, platform=platform, output=output, mode=mode, consolidate=consolidate, naked=naked)
 
 
 @click.command(name="generate-manifest", help="Generate a job/dataset manifest file from an AWS folder")
@@ -82,13 +84,16 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
 
 
 @click.command(name="generate-coco", help="Generate a coco formatted dataset from many jobs")
+@click.option("-m", "--mode", type=click.Choice(['combine', 'separate']), default='combine',
+              help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
 @click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
               help="output folder, exports stored in '$OUTPUT/coco-$timestamp.json'")
 @click.argument("coco_generate_config", type=click.File('rb'))
-def cli_generate_coco(platform, output, coco_generate_config):
-    generate_coco_dataset(coco_generate_config, output, platform)
+def cli_generate_coco(platform, output, mode, coco_generate_config):
+    separate = mode == 'separate'
+    generate_coco_dataset(coco_generate_config, output=output, platform=platform, separate=separate)
 
 
 @click.command(name="create-job", help="Generate a Labelbox job with an ontology and a dataset")
@@ -110,13 +115,15 @@ def cli_upload_coco_labels_to_job(coco_json, job_name):
 
 
 @click.command(name="generate-mal-ndjson", help="Generate a model assisted labeling ndJSON file for Labelbox")
+@click.option("-c", "--coco-json", type=click.Path(exists=True),
+              help="Coco formatted JSON data. Will use coco data rather than Yolo + Alphapose to generate ndJSON data.")
 @click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
               help="output folder, exports stored in '$OUTPUT/labelmaker-mal-$timestamp.ndjson'")
 @click.option('--upload', is_flag=True, default=False, help="Upload the ndJSON file after it's generated")
 @click.argument("job_name")
 @click.pass_context
-def cli_generate_mal_ndjson(ctx, output, job_name, upload):
-    file_name = generate_mal_ndjson(job_name, output)
+def cli_generate_mal_ndjson(ctx, output, job_name, upload, coco_json=None):
+    file_name = generate_mal_ndjson(job_name, output, coco_json)
 
     if upload and file_name:
         ctx.invoke(cli_upload_mal_ndjson, mal_file=file_name, job_name=job_name)
