@@ -337,6 +337,7 @@ class Labelbox(PlatformInterface):
 
             logger.info("Generating ndjson records for %s (data_row id: %s)" % (coco_image.file_name, data_row.uid))
             for coco_annotation in coco_model.get_annotations_for_image(coco_image.id):
+                logger.info("Adding labels for annotation id: %s" % coco_annotation.id)
                 labels = coco_annotation_to_labelbox(coco_annotation, ontology)
                 for label in labels:
                     mal_records.append({
