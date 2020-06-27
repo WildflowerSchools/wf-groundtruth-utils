@@ -76,6 +76,9 @@ class CocoOntologyTool(object):
     def __init__(self, tool):
         self.tool = tool
         self.type = LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_UNKNOWN
+
+        self.box_classification = None
+
         self.visibility = None
         self.keypoint_name = None
         self.nested_classification = None
@@ -86,7 +89,7 @@ class CocoOntologyTool(object):
         if self.tool['tool'] == 'point':
             self.__determine_keypoint_type()
         elif self.tool['tool'] == 'rectangle':
-            self.type = LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_BOUNDING_BOX
+            self.__determine_bbox_type()
 
     def __determine_keypoint_type(self):
         # First test for ontology type ONTOLOGY_TYPE_KEYPOINT_VISIBILITY_FLATTENED
@@ -113,6 +116,14 @@ class CocoOntologyTool(object):
                     self.type = LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_KEYPOINT_VISIBILITY_NESTED
                     self.keypoint_name = self.tool['name']
                 return
+
+    def __determine_bbox_type(self):
+        r = re.compile(r'^(Person|Adult|Child).*', re.IGNORECASE)
+        m = r.match(self.tool['name'])
+        if m is not None:
+            self.type = LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_BOUNDING_BOX
+
+            self.box_classification = m[1]
 
     def is_bounding_box(self):
         return self.type == LabelboxOntologyType.LABELBOX_ONTOLOGY_TYPE_BOUNDING_BOX

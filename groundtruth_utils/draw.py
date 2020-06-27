@@ -39,7 +39,7 @@ def draw_annotations(image_uri, annotations):
 def draw_annotations_and_save(image_uri, annotations, output_path, image_name):
     img_draw = draw_annotations(image_uri, annotations)
     img_draw.save("%s/%s" % (output_path, image_name), "PNG")
-    logger.info("Saved image %s (%d annotations)" % (image_name, len(annotations)))
+    logger.info("Saved image %s/%s (%d annotations)" % (output_path, image_name, len(annotations)))
 
 
 def draw_shape_on_image(img_draw, annotation):
