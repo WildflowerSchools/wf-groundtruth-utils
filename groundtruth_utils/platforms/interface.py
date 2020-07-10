@@ -31,7 +31,8 @@ class PlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def fetch_annotations(self, job_name: str, consolidate: bool):
+    def fetch_annotations(self, job_name: str, consolidate: bool,
+                          filter_min_confidence: float, filter_min_labelers: int):
         raise NotImplementedError
 
     @abc.abstractmethod

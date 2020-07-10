@@ -31,13 +31,17 @@ def fetch_annotations(job_name, platform='labelbox', consolidate=True):
 
 
 def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(),
-                       mode='combine', consolidate=True, naked=False):
+                       mode='combine', consolidate=True, naked=False, filter_min_confidence=0.0, filter_min_labelers=3):
     valid_modes = ['combine', 'separate']
     if mode.lower() not in valid_modes:
         raise Exception("'%s' invalid mode, must be combine|separate")
 
     active_platform = get_platform(platform)
-    annotations = active_platform.fetch_annotations(job_name, consolidate)
+    annotations = active_platform.fetch_annotations(
+        job_name,
+        consolidate,
+        filter_min_confidence=filter_min_confidence,
+        filter_min_labelers=filter_min_labelers)
 
     now = datetime.now()
     instance_output_path = "%s/%s/%s" % (output, job_name, now.strftime("%m-%d-%YT%H:%M:%S"))

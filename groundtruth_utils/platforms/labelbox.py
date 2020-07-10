@@ -134,11 +134,30 @@ class Labelbox(PlatformInterface):
 
         return JobList(jobs=result)
 
-    def fetch_annotations(self, job_name: str, consolidate=True):
+    def fetch_annotations(self, job_name: str, consolidate=True, filter_min_confidence=0.0, filter_min_labelers=3):
         row_data = LabelboxAPI.fetch_raw_project_data_rows_by_name(job_name)
+
+        # Filter image list by number of annotations with high enough confidence
+        def image_filter(raw_data_row):
+            value = len(raw_data_row['labels']) >= filter_min_labelers
+
+            if value is not False and filter_min_confidence > 0.0:
+                valid_labels = list(
+                    filter(
+                        lambda l: l['agreement'] is not None and l['agreement'] >= filter_min_confidence,
+                        raw_data_row['labels']))
+                value = len(valid_labels) >= filter_min_labelers
+
+            if value is False:
+                logger.warn("Image didn't pass filter rules: %s" % (raw_data_row['externalId']))
+
+            return value
 
         final_images = []
         for raw_data_row in row_data:
+            if image_filter(raw_data_row) is False:
+                continue
+
             image = Image.deserialize_labelbox(raw_data_row)
 
             if consolidate:

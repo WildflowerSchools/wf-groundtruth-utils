@@ -104,7 +104,7 @@ class CocoGenerator:
 
                         if external_annotation_id not in coco_images[file_name]['annotations']:
                             coco_images[file_name]['annotations'][external_annotation_id] = CocoKeypointAnnotation(
-                                image_id=image_id, category_id=get_coco_category(annotation_match['label']).id)
+                                image_id=image_id, category_id=get_coco_category(annotation_config['category']).id)
 
                         if annotation_config['type'] == 'bbox':
                             coco_images[file_name]['annotations'][external_annotation_id].bbox = [

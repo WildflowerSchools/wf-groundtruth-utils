@@ -2,15 +2,8 @@
   "tools": [
     {
       "required": false,
-      "name": "Person",
-      "color": "#FF0000",
-      "tool": "rectangle",
-      "classifications": []
-    },
-    {
-      "required": false,
       "name": "Nose - Visible",
-      "color": "#FF0000",
+      "color": "#ff0000",
       "tool": "point",
       "classifications": []
     },
@@ -24,7 +17,7 @@
     {
       "required": false,
       "name": "Neck - Visible",
-      "color": "#FF0000",
+      "color": "#ff6d6d",
       "tool": "point",
       "classifications": []
     },
@@ -37,226 +30,240 @@
     },
     {
       "required": false,
-      "name": "Left Eye - Visible",
-      "color": "#7A5D00",
+      "name": "Left Eye - Visible (lface)",
+      "color": "#9900ff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Eye - Not Visible",
+      "name": "Left Eye - Not Visible (lface)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Eye - Visible",
-      "color": "#7A5D00",
+      "name": "Right Eye - Visible (rface)",
+      "color": "#ceaaff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Eye - Not Visible",
+      "name": "Right Eye - Not Visible (rface)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Ear - Visible",
-      "color": "#7A004E",
+      "name": "Left Ear - Visible (lface)",
+      "color": "#ff00ff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Ear - Not Visible",
+      "name": "Left Ear - Not Visible (lface)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Ear - Visible",
-      "color": "#7A004E",
+      "name": "Right Ear - Visible (rface)",
+      "color": "#ff98ff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Ear - Not Visible",
+      "name": "Right Ear - Not Visible (rface)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Shoulder - Visible",
-      "color": "#0000FF",
+      "name": "Left Shoulder - Visible (la)",
+      "color": "#0000ff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Shoulder - Not Visible",
+      "name": "Left Shoulder - Not Visible (la)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Shoulder - Visible",
-      "color": "#0000FF",
+      "name": "Right Shoulder - Visible (ra)",
+      "color": "#8e8eff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Shoulder - Not Visible",
+      "name": "Right Shoulder - Not Visible (ra)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Elbow - Visible",
-      "color": "#00CCFF",
+      "name": "Left Elbow - Visible (la)",
+      "color": "#00ccff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Elbow - Not Visible",
+      "name": "Left Elbow - Not Visible (la)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Elbow - Visible",
-      "color": "#00CCFF",
+      "name": "Right Elbow - Visible (ra)",
+      "color": "#b4f0ff",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Elbow - Not Visible",
+      "name": "Right Elbow - Not Visible (ra)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Wrist - Visible",
-      "color": "#00FFCC",
+      "name": "Left Wrist - Visible (la)",
+      "color": "#18ffd1",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Wrist - Not Visible",
+      "name": "Left Wrist - Not Visible (la)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Wrist - Visible",
-      "color": "#00FFCC",
+      "name": "Right Wrist - Visible (ra)",
+      "color": "#80ffe6",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Wrist - Not Visible",
+      "name": "Right Wrist - Not Visible (ra)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Hip - Visible",
-      "color": "#00FF66",
+      "name": "Left Hip - Visible (ll)",
+      "color": "#274e13",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Hip - Not Visible",
+      "name": "Left Hip - Not Visible (ll)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Hip - Visible",
-      "color": "#00FF66",
+      "name": "Right Hip - Visible (rl)",
+      "color": "#97b687",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Hip - Not Visible",
+      "name": "Right Hip - Not Visible (rl)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Knee - Visible",
-      "color": "#239100",
+      "name": "Left Knee - Visible (ll)",
+      "color": "#00ff00",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Knee - Not Visible",
+      "name": "Left Knee - Not Visible (ll)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Knee - Visible",
-      "color": "#239100",
+      "name": "Right Knee - Visible (rl)",
+      "color": "#a8ffa8",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Knee - Not Visible",
+      "name": "Right Knee - Not Visible (rl)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Ankle - Visible",
-      "color": "#F1B700",
+      "name": "Left Ankle - Visible (ll)",
+      "color": "#ecff00",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Left Ankle - Not Visible",
+      "name": "Left Ankle - Not Visible (ll)",
       "color": "#C4C4C4",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Ankle - Visible",
-      "color": "#F1B700",
+      "name": "Right Ankle - Visible (rl)",
+      "color": "#e9ff7f",
       "tool": "point",
       "classifications": []
     },
     {
       "required": false,
-      "name": "Right Ankle - Not Visible",
+      "name": "Right Ankle - Not Visible (rl)",
       "color": "#C4C4C4",
       "tool": "point",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Child (box)",
+      "color": "#ff9900",
+      "tool": "rectangle",
+      "classifications": []
+    },
+    {
+      "required": false,
+      "name": "Adult (box)",
+      "color": "#ffff01",
+      "tool": "rectangle",
       "classifications": []
     }
   ],
@@ -272,12 +279,12 @@
           "value": "image_poor_quality"
         },
         {
-          "label": "Person much too unclear/blurry/etc",
-          "value": "person_much_too_unclear/blurry/etc"
+          "label": "Person much too unclear/blurry/overexposed",
+          "value": "person_much_too_unclear/blurry/overexposed"
         },
         {
-          "label": "Person should not be tagged (e.g. parent)",
-          "value": "person_should_not_be_tagged_(e.g._parent)"
+          "label": "Person too occluded",
+          "value": "person_too_occluded"
         }
       ]
     }

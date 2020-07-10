@@ -66,11 +66,23 @@ def list_annotations(platform, no_consolidate, raw, job_name):
               help="default action is to consolidate multiple data labeler's annotations, use this flag to disable consolidation")
 @click.option('--naked', is_flag=True, default=False,
               help="default action is to draw geoms on top of image, naked can be used to generate 'naked' images without any drawn geoms")
-# TODO: Consider adding confidence filter
+@click.option('--filter-min-confidence', type=click.FloatRange(0.0, 1.0), default=0.0,
+              help="filter images with a minimum computed confidence (0-100)")
+@click.option('--filter-min-labelers', type=click.IntRange(0, 10), default=3,
+              help="filter images labeled by a minimum number of labelers (0-10)")
 @click.argument("job_name")
-def cli_generate_image_set(platform, output, mode, no_consolidate, naked, job_name):
+def cli_generate_image_set(platform, output, mode, no_consolidate, naked,
+                           filter_min_confidence, filter_min_labelers, job_name):
     consolidate = not no_consolidate
-    generate_image_set(job_name, platform=platform, output=output, mode=mode, consolidate=consolidate, naked=naked)
+    generate_image_set(
+        job_name,
+        platform=platform,
+        output=output,
+        mode=mode,
+        consolidate=consolidate,
+        naked=naked,
+        filter_min_confidence=filter_min_confidence,
+        filter_min_labelers=filter_min_labelers)
 
 
 @click.command(name="generate-manifest", help="Generate a job/dataset manifest file from an AWS folder")
