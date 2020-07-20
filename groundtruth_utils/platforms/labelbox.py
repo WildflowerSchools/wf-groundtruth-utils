@@ -5,7 +5,7 @@ import os
 import uuid
 
 import cv2 as cv
-from labelbox import Client as LBClient, exceptions as LBExceptions
+from labelbox import Client as LBClient, exceptions as LBExceptions, schema
 import numpy as np
 from pycocotools.coco import COCO
 
@@ -175,7 +175,7 @@ class Labelbox(PlatformInterface):
             image = Image.deserialize_labelbox(raw_data_row)
             final_images.append(image)
 
-        return final_images
+        return ImageList(images=final_images)
 
     def generate_manifest(self, s3_images_uri: str, metadata: dict):
         folder_object_uris = self.__class__.list_images_in_s3_folder(s3_images_uri)
@@ -189,6 +189,34 @@ class Labelbox(PlatformInterface):
             })
 
         return json.dumps(items, indent=2)
+
+    def create_dataset(self, dataset_name='', manifest_json=None):
+        if dataset_name == '':
+            raise Exception("Dataset name is required, got an empty name")
+
+        if manifest_json is None:
+            raise Exception("manifest data is required, got None")
+
+        if len(manifest_json) == 0:
+            logger.warn("No data in manifest, skipping dataset creation")
+            return None
+
+        lb_client = LBClient()
+        dataset = lb_client.create_dataset(name=dataset_name)
+
+        if dataset is None:
+            raise Exception("Could not create dataset '%s'" % dataset_name)
+
+        manifest_bulk = []
+        for r in manifest_json:
+            manifest_bulk.append({
+                schema.data_row.DataRow.row_data: r['imageUrl'],
+                schema.data_row.DataRow.external_id: r['externalId']
+            })
+
+        dataset.create_data_rows(manifest_bulk)
+
+        return dataset
 
     def create_job(self, job_name='', attrs=None):
         if attrs is None:
@@ -300,33 +328,38 @@ class Labelbox(PlatformInterface):
                         'NOT deleting feature %s. Feature has associated label: %s' %
                         (feature['id'], feature['label']['id']))
 
-    def generate_mal_ndjson(self, job_name, coco_model):
+    def generate_mal_ndjson(self, job_name, coco_model, filter_dataset_id=None):
         """Annotations object format: [{'image': Coco.Image, 'annotations': Coco.Annotation}]"""
         project = LabelboxAPI.fetch_raw_project_by_name(job_name)
         ontology = LabelboxAPI.get_project_ontology(project.uid)
 
         mal_records = []
         max_retries = 3
+
+        retry = 0
+
+        datasets = []
+        while retry <= max_retries:
+            try:
+                datasets = []
+                logger.info("Filter Dataset ID: %s" % filter_dataset_id)
+                for dataset in project.datasets():
+                    logger.info("Dataset ID: %s" % dataset.uid)
+                    if filter_dataset_id is None or dataset.uid == filter_dataset_id:
+                        logger.info("Match")
+                        datasets.append(dataset)
+                break
+            except LBExceptions.LabelboxError as e:
+                if retry >= max_retries:
+                    raise e
+                else:
+                    retry += 1
+                    logger.error(
+                        "Encountered a connection error fetching datasets, retrying (%d/%d)" %
+                        (retry, max_retries))
+
         for coco_image in coco_model.images:
             data_row = None
-
-            retry = 0
-
-            datasets = []
-            while retry <= max_retries:
-                try:
-                    datasets = []
-                    for dataset in project.datasets():
-                        datasets.append(dataset)
-                    break
-                except LBExceptions.LabelboxError as e:
-                    if retry >= max_retries:
-                        raise e
-                    else:
-                        retry += 1
-                        logger.error(
-                            "Encountered a connection error fetching datasets, retrying (%d/%d)" %
-                            (retry, max_retries))
 
             for dataset in datasets:
                 retry = 0
@@ -351,7 +384,7 @@ class Labelbox(PlatformInterface):
                     break
 
             if data_row is None:
-                logger.warn("Unable to find %s in project dataset" % (coco_image.file_name))
+                logger.warn("Unable to find %s in project datasets" % (coco_image.file_name))
                 continue
 
             logger.info("Generating ndjson records for %s (data_row id: %s)" % (coco_image.file_name, data_row.uid))

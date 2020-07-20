@@ -5,7 +5,7 @@ import os
 
 from .annotate import Annotate
 from .log import logger
-from .core import create_job, delete_mals, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job, upload_mal_ndjson, status_mal_ndjson
+from .core import create_dataset, create_job, delete_mals, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job, upload_mal_ndjson, status_mal_ndjson
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
@@ -70,9 +70,10 @@ def list_annotations(platform, no_consolidate, raw, job_name):
               help="filter images with a minimum computed confidence (0-100)")
 @click.option('--filter-min-labelers', type=click.IntRange(0, 10), default=3,
               help="filter images labeled by a minimum number of labelers (0-10)")
+@click.option('--append', type=str, help="Job name for the job you want to append images to, use to filter out duplicates")
 @click.argument("job_name")
 def cli_generate_image_set(platform, output, mode, no_consolidate, naked,
-                           filter_min_confidence, filter_min_labelers, job_name):
+                           filter_min_confidence, filter_min_labelers, append, job_name):
     consolidate = not no_consolidate
     generate_image_set(
         job_name,
@@ -82,7 +83,8 @@ def cli_generate_image_set(platform, output, mode, no_consolidate, naked,
         consolidate=consolidate,
         naked=naked,
         filter_min_confidence=filter_min_confidence,
-        filter_min_labelers=filter_min_labelers)
+        filter_min_labelers=filter_min_labelers,
+        append_job_name=append)
 
 
 @click.command(name="generate-manifest", help="Generate a job/dataset manifest file from an AWS folder")
@@ -121,6 +123,14 @@ def cli_generate_coco(platform, output, mode, filter_min_confidence,
                           validation_set=validation_set)
 
 
+@click.command(name="create-dataset", help="Generate a Labelbox dataset using a manifest file")
+@click.option("-m", "--manifest", type=click.File('rb'), required=True, help="Labelbox Manifest file")
+@click.argument("dataset_name")
+def cli_create_dataset(manifest, dataset_name):
+    dataset = create_dataset(dataset_name, manifest_file=manifest)
+    click.echo(dataset.uid)
+
+
 @click.command(name="create-job", help="Generate a Labelbox job with an ontology and a dataset")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
@@ -145,10 +155,12 @@ def cli_upload_coco_labels_to_job(coco_json, job_name):
 @click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
               help="output folder, exports stored in '$OUTPUT/labelmaker-mal-$timestamp.ndjson'")
 @click.option('--upload', is_flag=True, default=False, help="Upload the ndJSON file after it's generated")
+@click.option('-d', '--dataset-id', type=str,
+              help="general ndjson records for a specific dataset in the job")
 @click.argument("job_name")
 @click.pass_context
-def cli_generate_mal_ndjson(ctx, output, job_name, upload, coco_json=None):
-    file_name = generate_mal_ndjson(job_name, output, coco_json)
+def cli_generate_mal_ndjson(ctx, output, job_name, upload, coco_json=None, dataset_id=None):
+    file_name = generate_mal_ndjson(job_name, output, coco_json, dataset_id)
 
     if upload and file_name:
         ctx.invoke(cli_upload_mal_ndjson, mal_file=file_name, job_name=job_name)
@@ -207,6 +219,7 @@ cli.add_command(cli_generate_image_set)
 cli.add_command(cli_generate_manifest)
 cli.add_command(cli_generate_coco)
 cli.add_command(cli_create_job)
+cli.add_command(cli_create_dataset)
 cli.add_command(cli_upload_coco_labels_to_job)
 cli.add_command(cli_generate_mal_ndjson)
 cli.add_command(cli_upload_mal_ndjson)

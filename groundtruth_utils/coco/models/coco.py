@@ -20,7 +20,7 @@ class Coco(BaseModel):
             self.images.append(Image(
                 id=image['id'],
                 file_name=image['file_name'],
-                coco_uel=image['coco_url'],
+                coco_url=image['coco_url'],
                 width=image['width'],
                 height=image['height']
             ))

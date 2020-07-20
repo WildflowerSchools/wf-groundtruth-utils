@@ -2,7 +2,6 @@ from datetime import datetime
 import json
 import ndjson
 import pathlib
-import tempfile
 import time
 import uuid
 
@@ -31,7 +30,9 @@ def fetch_annotations(job_name, platform='labelbox', consolidate=True):
 
 
 def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(),
-                       mode='combine', consolidate=True, naked=False, filter_min_confidence=0.0, filter_min_labelers=3):
+                       mode='combine', consolidate=True, naked=False,
+                       filter_min_confidence=0.0, filter_min_labelers=3,
+                       append_job_name=''):
     valid_modes = ['combine', 'separate']
     if mode.lower() not in valid_modes:
         raise Exception("'%s' invalid mode, must be combine|separate")
@@ -43,6 +44,11 @@ def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(),
         filter_min_confidence=filter_min_confidence,
         filter_min_labelers=filter_min_labelers)
 
+    existing_image_names = []
+    if append_job_name:
+        append_job_images = active_platform.fetch_images(append_job_name).images
+        existing_image_names = list(map(lambda img: img.external_id, append_job_images))
+
     now = datetime.now()
     instance_output_path = "%s/%s/%s" % (output, job_name, now.strftime("%m-%d-%YT%H:%M:%S"))
 
@@ -52,11 +58,19 @@ def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(),
         image_name = os.path.basename(image.url)
         if mode == 'combine':
             image_annotations = image.annotations if not naked else []
+            if image_name in existing_image_names:
+                logger.info("Skipping '%s', image already in the 'append' dataset" % image_name)
+                continue
+
             draw_annotations_and_save(image.url, image_annotations, instance_output_path, image_name)
         elif mode == 'separate':
             for idx, annotation in enumerate(image.annotations):
                 image_annotation = [annotation] if not naked else []
                 separated_file_name = get_separated_file_name(image_name, idx)
+                if separated_file_name in existing_image_names:
+                    logger.info("Skipping '%s', image already in the 'append' dataset" % separated_file_name)
+                    continue
+
                 draw_annotations_and_save(
                     image.url, image_annotation, instance_output_path, separated_file_name)
 
@@ -66,8 +80,9 @@ def generate_manifest(s3_images_uri, platform='labelbox', metadata=None):
     return active_platform.generate_manifest(s3_images_uri, metadata=metadata)
 
 
-def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='labelbox',
-                          separate=False, filter_min_confidence=0.0, filter_min_labelers=3, validation_set=0.0):
+def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='labelbox', separate=False,
+                          filter_min_confidence=0.0, filter_min_labelers=3,
+                          validation_set=0.0):
     now = datetime.now()
     pathlib.Path(output).mkdir(parents=True, exist_ok=True)
 
@@ -95,6 +110,14 @@ def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='la
         logger.info("Saved coco validation dataset to %s" % val_output_file)
 
 
+def create_dataset(dataset_name='', manifest_file=None):
+    manifest_json = json.load(manifest_file)
+
+    platform = get_platform('labelbox')
+    dataset = platform.create_dataset(dataset_name, manifest_json=manifest_json)
+    return dataset
+
+
 def create_job(job_name='', platform='labelbox', ontology_file=None, dataset_id=None):
     ontology_json = json.load(ontology_file)
 
@@ -108,7 +131,7 @@ def upload_coco_labels_to_job(job_name='', coco_annotation_file=None):
     platform.upload_coco_dataset(job_name, coco_annotation_file)
 
 
-def generate_mal_ndjson(job_name='', output=os.getcwd(), coco_annotation_file=None):
+def generate_mal_ndjson(job_name='', output=os.getcwd(), coco_annotation_file=None, dataset_id=None):
     now = datetime.now()
     output_file = "%s/labelbox-mal-%s.ndjson" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
 
@@ -128,13 +151,9 @@ def generate_mal_ndjson(job_name='', output=os.getcwd(), coco_annotation_file=No
         logger.warn("No Machine Annotated Labels generated")
         return None
 
-    # with tempfile.NamedTemporaryFile() as temp_coco_file:
-    #     temp_coco_file.write(model.json().encode("utf-8"))
-    #     temp_coco_file.flush()
-
     logger.info("Generating ndjson records...")
     tic = time.time()
-    mal_records = platform.generate_mal_ndjson(job_name, model)
+    mal_records = platform.generate_mal_ndjson(job_name, model, filter_dataset_id=dataset_id)
     logger.info('Done Generating ndjson records (t={:0.2f}s)'.format(time.time() - tic))
 
     if mal_records is None:
