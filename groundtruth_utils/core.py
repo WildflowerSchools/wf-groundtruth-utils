@@ -39,7 +39,7 @@ def generate_image_set(job_name='', platform='labelbox', output=os.getcwd(),
     active_platform = get_platform(platform)
     annotations = active_platform.fetch_annotations(
         job_name,
-        consolidate,
+        consolidate=consolidate,
         filter_min_confidence=filter_min_confidence,
         filter_min_labelers=filter_min_labelers)
 
@@ -66,20 +66,33 @@ def generate_manifest(s3_images_uri, platform='labelbox', metadata=None):
     return active_platform.generate_manifest(s3_images_uri, metadata=metadata)
 
 
-def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='labelbox', separate=False):
+def generate_coco_dataset(coco_generate_config, output=os.getcwd(), platform='labelbox',
+                          separate=False, filter_min_confidence=0.0, filter_min_labelers=3, validation_set=0.0):
     now = datetime.now()
-    output_file = "%s/coco-%s.json" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
-
     pathlib.Path(output).mkdir(parents=True, exist_ok=True)
 
     generator = CocoGenerator()
-    generator.load_data_from_platform(platform, coco_generate_config, separate)
+    generator.load_data_from_platform(platform, coco_generate_config, separate,
+                                      filter_min_confidence=filter_min_confidence,
+                                      filter_min_labelers=filter_min_labelers)
     model = generator.model()
 
-    with open(output_file, "w") as f:
-        f.write(model.json())
+    output_file = "%s/coco-%s.json" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
+    if validation_set == 0.0:
+        with open(output_file, "w") as f:
+            f.write(model.json())
+        logger.info("Saved coco dataset to %s" % output_file)
+    else:
+        val_output_file = "%s/coco-%s_val.json" % (output, now.strftime("%m-%d-%YT%H:%M:%S"))
+        [validation_model, train_model] = model.split(percent=validation_set)
 
-    logger.info("Saved coco dataset to %s" % output_file)
+        with open(output_file, "w") as f:
+            f.write(train_model.json())
+        logger.info("Saved coco training dataset to %s" % output_file)
+
+        with open(val_output_file, "w") as f:
+            f.write(validation_model.json())
+        logger.info("Saved coco validation dataset to %s" % val_output_file)
 
 
 def create_job(job_name='', platform='labelbox', ontology_file=None, dataset_id=None):

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import random
 from typing import List
 
 from .annotation import Annotation, KeypointAnnotation
@@ -19,6 +20,7 @@ class Coco(BaseModel):
             self.images.append(Image(
                 id=image['id'],
                 file_name=image['file_name'],
+                coco_uel=image['coco_url'],
                 width=image['width'],
                 height=image['height']
             ))
@@ -35,3 +37,26 @@ class Coco(BaseModel):
                     keypoints=annotation['keypoints'],
                     num_keypoints=annotation['num_keypoints']
                 ))
+
+    def split(self, percent=0.0):
+        if percent == 0.0:
+            return [self, None]
+
+        random.shuffle(self.images)
+
+        cut = round(len(self.images) * percent)
+        coco_front = Coco(images=self.images[:cut], categories=self.categories)
+        coco_back = Coco(images=self.images[cut:], categories=self.categories)
+
+        for ann in self.annotations:
+            matched = False
+            for img in coco_front.images:
+                if ann.image_id == img.id:
+                    matched = True
+                    coco_front.annotations.append(ann)
+                    break
+
+            if not matched:
+                coco_back.annotations.append(ann)
+
+        return [coco_front, coco_back]

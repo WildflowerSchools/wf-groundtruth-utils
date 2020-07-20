@@ -91,7 +91,6 @@ class Sagemaker(PlatformInterface):
             for object_key in folder_object_uris:
                 custom_metadata = {"externalId": os.path.basename(object_key)}
                 if metadata:
-
                     custom_metadata.update(metadata)
 
                 fp.write(json.dumps({

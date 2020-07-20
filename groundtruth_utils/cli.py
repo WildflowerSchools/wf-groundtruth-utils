@@ -100,12 +100,25 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
               help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
-@click.option("-o", "--output", type=click.Path(), default="%s/output" % (os.getcwd()),
-              help="output folder, exports stored in '$OUTPUT/coco-$timestamp.json'")
+@click.option("-o", "--output", type=click.Path(), default="%s/output/coco-datasets" % (os.getcwd()),
+              help="output folder, exports stored in '$OUTPUT/coco-datasets/coco-$timestamp.json'")
+@click.option('--filter-min-confidence', type=click.FloatRange(0.0, 1.0), default=0.0,
+              help="filter images with a minimum computed confidence (0-100)")
+@click.option('--filter-min-labelers', type=click.IntRange(0, 10), default=3,
+              help="filter images labeled by a minimum number of labelers (0-10)")
+@click.option('--validation-set', type=click.FloatRange(0.0, .35), default=0.0,
+              help="creates a validation coco set using the given percentage")
 @click.argument("coco_generate_config", type=click.File('rb'))
-def cli_generate_coco(platform, output, mode, coco_generate_config):
+def cli_generate_coco(platform, output, mode, filter_min_confidence,
+                      filter_min_labelers, coco_generate_config, validation_set):
     separate = mode == 'separate'
-    generate_coco_dataset(coco_generate_config, output=output, platform=platform, separate=separate)
+    generate_coco_dataset(coco_generate_config,
+                          output=output,
+                          platform=platform,
+                          separate=separate,
+                          filter_min_confidence=filter_min_confidence,
+                          filter_min_labelers=filter_min_labelers,
+                          validation_set=validation_set)
 
 
 @click.command(name="create-job", help="Generate a Labelbox job with an ontology and a dataset")

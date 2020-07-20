@@ -1,4 +1,3 @@
-import contextlib
 import re
 import requests
 import tempfile
@@ -26,18 +25,25 @@ class CocoGenerator:
     def load_config(config_file):
         return yaml.load(config_file, Loader=yaml.FullLoader)
 
-    def load_data_from_platform(self, platform, config_file, separate_by_annotation=False):
+    def load_data_from_platform(self, platform, config_file, separate_by_annotation=False,
+                                filter_min_confidence=0.0, filter_min_labelers=3):
         config = self.__class__.load_config(config_file)
 
         coco_images = {}
         for job_config in config['jobs']:
             logger.info("Loading '%s' annotations" % job_config['name'])
             active_platform = get_platform(platform)
-            images = active_platform.fetch_annotations(job_config['name'], True)
+            images = active_platform.fetch_annotations(
+                job_config['name'],
+                consolidate=True,
+                filter_min_confidence=filter_min_confidence,
+                filter_min_labelers=filter_min_labelers)
             images.set_excluded_null()
 
             image_id = 0
             for image_idx, image in enumerate(images.images):
+                logger.info("%s - Generating annotations" % image.external_id)
+
                 external_id = image.external_id
                 image_as_dict = image.dict()
                 if 'externalIdPattern' in job_config:
@@ -67,8 +73,8 @@ class CocoGenerator:
                                 'visibility': CocoKeypointAnnotation.Visibility.VISIBILITY_LABELED_VISIBLE} for match in jsonpath_expr.find(
                                 image_as_dict['annotations'])]
 
-                        logger.info("%s:%s - Fetching keypoint not-visible annotations for category '%s'" %
-                                    (image.external_id, external_id, annotation_config['category']))
+                        logger.info("%s - Fetching keypoint not-visible annotations for category '%s'" %
+                                    (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['notVisible'])
                         not_visible_annotations = [
                             {
@@ -76,7 +82,6 @@ class CocoGenerator:
                                 'visibility': CocoKeypointAnnotation.Visibility.VISIBILITY_LABELED_NOT_VISIBLE} for match in jsonpath_expr.find(
                                 image_as_dict['annotations'])]
 
-                        logger.info("Merging annotations into data structure")
                         all_annotations += visible_annotations + not_visible_annotations
 
                     for annotation_match_idx, annotation_match in enumerate(all_annotations):
@@ -86,9 +91,13 @@ class CocoGenerator:
 
                         if file_name not in coco_images:
                             image_id += 1
-                            logger.info("Adding annotations for image '%s'" % (file_name))
                             coco_images[file_name] = {
-                                'image': CocoImage(id=image_id, file_name=file_name, width=0, height=0),
+                                'image': CocoImage(
+                                    id=image_id,
+                                    file_name=file_name,
+                                    coco_url=os.path.join(os.path.split(image.url)[0], file_name),
+                                    width=0,
+                                    height=0),
                                 'annotations': {}}
 
                         if separate_by_annotation:
@@ -115,8 +124,8 @@ class CocoGenerator:
                         elif annotation_config['type'] == 'keypoint':
                             coco_images[file_name]['annotations'][external_annotation_id].add_keypoint(
                                 CocoKeypointCategory.Keypoint(annotation_config['category']),
-                                annotation_match['x'],
-                                annotation_match['y'],
+                                annotation_match['annotation']['x'],
+                                annotation_match['annotation']['y'],
                                 CocoKeypointAnnotation.Visibility(annotation_match['visibility']))
 
         annotation_id = 0
@@ -257,6 +266,7 @@ class CocoGenerator:
                         id=image_idx,
                         file_name=os.path.basename(
                             image.url),
+                        coco_url=image.url,
                         width=0,
                         height=0))
                 self.coco.annotations.extend(coco_annotations)
@@ -268,10 +278,3 @@ class CocoGenerator:
 
     def model(self):
         return self.coco
-
-    # @contextlib.contextmanager
-    # def with_model_as_tempfile(self):
-    #     with tempfile.NamedTemporaryFile() as temp_coco_file:
-    #         temp_coco_file.write(self.coco.json().encode("utf-8"))
-    #         temp_coco_file.flush()
-    #         yield temp_coco_file
