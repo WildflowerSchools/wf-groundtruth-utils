@@ -20,7 +20,7 @@ BASE_DEPENDENCIES = [
     'wf-pycocotools>=2.0.1',
     'pydantic>=1.5.1',
     'PyYAML>=5.3.1',
-    'wf-pytorch-yolo-v4>=0.1.1'
+    'wf-pytorch-yolo-v4>=0.1.5'
 ]
 
 # TEST_DEPENDENCIES = [

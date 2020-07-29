@@ -49,7 +49,7 @@ class Detector(object):
         resized_img = cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB)
 
         start = time.time()
-        detections = np.array(do_detect(self.detector, resized_img, self.conf_threshold, 0.6, self.use_cuda))
+        detections = np.array(do_detect(self.detector, resized_img, 0.05, 0.6, self.use_cuda))
         finish = time.time()
 
         class_names = load_class_names(COCO_NAMES)
@@ -63,10 +63,14 @@ class Detector(object):
         # Convert from 0.0-1.0 float value to specific pixel location
         width = resized_img.shape[1]
         height = resized_img.shape[0]
-        xmin = (boxes[:, :, 0] - (boxes[:, :, 2] / 2.0)) * width
-        ymin = (boxes[:, :, 1] - (boxes[:, :, 3] / 2.0)) * height
-        xmax = (boxes[:, :, 0] + (boxes[:, :, 2] / 2.0)) * width
-        ymax = (boxes[:, :, 1] + (boxes[:, :, 3] / 2.0)) * height
+        # xmin = (boxes[:, :, 0] - (boxes[:, :, 2] / 2.0)) * width
+        # ymin = (boxes[:, :, 1] - (boxes[:, :, 3] / 2.0)) * height
+        # xmax = (boxes[:, :, 0] + (boxes[:, :, 2] / 2.0)) * width
+        # ymax = (boxes[:, :, 1] + (boxes[:, :, 3] / 2.0)) * height
+        xmin = boxes[:, :, 0] * width
+        ymin = boxes[:, :, 1] * height
+        xmax = boxes[:, :, 2] * width
+        ymax = boxes[:, :, 3] * height
 
         boxes[:, :, 0] = xmin
         boxes[:, :, 1] = ymin

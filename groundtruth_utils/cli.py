@@ -203,8 +203,24 @@ def cli_annotate_image(image):
 
     if result is not None:
         click.echo(json.dumps(result, indent=4))
+
+        # import matplotlib.pyplot as plt
+        # from matplotlib.patches import Rectangle
+        # from PIL import Image
+        #
+        # # Display the image
+        # plt.imshow(Image.open(image))
+        #
+        # # Add the patch to the Axes
+        # for ann in result:
+        #     box = ann['bbox']
+        #     plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1,edgecolor='r',facecolor='none'))
+        #
+        # path = os.path.dirname(image)
+        # plt.savefig(os.path.join(path, 'output.png'), dpi=90, bbox_inches='tight')
     else:
         logger.error('Annotation returned unexpected result, exiting')
+
 
 
 @click_log.simple_verbosity_option(logger)

@@ -67,7 +67,7 @@ class Annotate(object):
         #                               box_thresh=self.bbox_conf_threshold, keypoint_thresh=0.2)
         # plt.show()
 
-        bounding_boxes_upscaled = bounding_boxes[0]
+        bounding_boxes_upscaled = bounding_boxes[0].copy()
         bounding_boxes_upscaled[:, (0, 2)] *= img_upscale_width
         bounding_boxes_upscaled[:, (1, 3)] *= img_upscale_height
 
