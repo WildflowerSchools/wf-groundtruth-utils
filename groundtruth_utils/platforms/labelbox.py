@@ -153,19 +153,19 @@ class Labelbox(PlatformInterface):
 
             return value
 
-        final_images = []
+        valid_images, invalid_images = [], []
         for raw_data_row in row_data:
-            if image_filter(raw_data_row) is False:
-                continue
-
             image = Image.deserialize_labelbox(raw_data_row)
 
             if consolidate:
                 image.annotations = self.__class__.consolidate_annotations(image.annotations)
 
-            final_images.append(image)
+            if image_filter(raw_data_row):
+                valid_images.append(image)
+            else:
+                invalid_images.append(image)
 
-        return ImageList(images=final_images)
+        return ImageList(images=valid_images), ImageList(images=invalid_images)
 
     def fetch_images(self, job_name: str):
         row_data = LabelboxAPI.fetch_all_project_images(job_name)

@@ -78,7 +78,7 @@ class Sagemaker(PlatformInterface):
         if annotations_json is None:
             raise Exception("unable to download/process annotations data")
 
-        return ImageList.deserialize_sagemaker(annotations_json)
+        return ImageList.deserialize_sagemaker(annotations_json), None
 
     def generate_manifest(self, s3_images_uri: str, metadata: dict):
         folder_object_uris = self.__class__.list_images_in_s3_folder(s3_images_uri)

@@ -33,22 +33,37 @@ class CocoGenerator:
         for job_config in config['jobs']:
             logger.info("Loading '%s' annotations" % job_config['name'])
             active_platform = get_platform(platform)
-            images = active_platform.fetch_annotations(
+            valid_images, invalid_images = active_platform.fetch_annotations(
                 job_config['name'],
                 consolidate=True,
                 filter_min_confidence=filter_min_confidence,
                 filter_min_labelers=filter_min_labelers)
-            images.set_excluded_null()
 
-            image_id = 0
-            for image_idx, image in enumerate(images.images):
-                logger.info("%s - Generating annotations" % image.external_id)
+            valid_images.set_excluded_null()
 
+            incomplete_image_ids = []
+            for image_idx, image in enumerate(invalid_images.images):
                 external_id = image.external_id
-                image_as_dict = image.dict()
                 if 'externalIdPattern' in job_config:
                     r = re.compile(job_config['externalIdPattern'])
                     external_id = ''.join(re.split(r, external_id))
+                incomplete_image_ids.append(external_id)
+
+            image_id = 0
+            for image_idx, image in enumerate(valid_images.images):
+                logger.info("%s - Generating annotations" % image.external_id)
+
+                image_as_dict = image.dict()
+                external_id = image.external_id
+                if 'externalIdPattern' in job_config:
+                    r = re.compile(job_config['externalIdPattern'])
+                    external_id = ''.join(re.split(r, external_id))
+
+                if external_id in incomplete_image_ids:
+                    logger.info(
+                        "%s - Skipping because image still has pending annotations that have not been completed or match filter rules" %
+                        (image.external_id))
+                    continue
 
                 annotation_idx = 0
                 for annotation_config in job_config['annotations']:
@@ -56,15 +71,13 @@ class CocoGenerator:
 
                     if annotation_config['type'] == 'bbox':
                         logger.info(
-                            "%s - Fetching bbox annotations for category '%s'" %
+                            "%s - Parsing bbox annotations for category '%s'" %
                             (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['match'])
                         all_annotations += [match.value
                                             for idx, match in enumerate(jsonpath_expr.find(image_as_dict['annotations']))]
-                        pass
-
                     elif annotation_config['type'] == 'keypoint':
-                        logger.info("%s - Fetching keypoint visible annotations for category '%s'" %
+                        logger.info("%s - Parsing keypoint visible annotations for category '%s'" %
                                     (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['visible'])
                         visible_annotations = [
@@ -73,7 +86,7 @@ class CocoGenerator:
                                 'visibility': CocoKeypointAnnotation.Visibility.VISIBILITY_LABELED_VISIBLE} for match in jsonpath_expr.find(
                                 image_as_dict['annotations'])]
 
-                        logger.info("%s - Fetching keypoint not-visible annotations for category '%s'" %
+                        logger.info("%s - Parsing keypoint not-visible annotations for category '%s'" %
                                     (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['notVisible'])
                         not_visible_annotations = [

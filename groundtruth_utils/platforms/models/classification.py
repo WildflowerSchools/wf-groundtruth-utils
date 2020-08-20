@@ -27,7 +27,10 @@ class Classification(BaseModel):
             for answer in raw_classification['answers']:
                 values.append(answer['title'])
         elif 'answer' in raw_classification:
-            values.append(raw_classification['answer']['title'])
+            if 'title' in raw_classification['answer']:
+                values.append(raw_classification['answer']['title'])
+            else:
+                values.append(raw_classification['answer'])
 
         return Classification(
             label=raw_classification['title'],

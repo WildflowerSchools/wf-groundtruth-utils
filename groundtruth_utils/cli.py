@@ -1,5 +1,6 @@
 import click
 import click_log
+from datetime import datetime
 import json
 import os
 
@@ -9,6 +10,9 @@ from .core import create_dataset, create_job, delete_mals, fetch_annotations, fe
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
+
+
+now = datetime.now().strftime("%m-%d-%YT%H:%M:%S")
 
 
 def validate_json(ctx, param, value):
@@ -46,7 +50,7 @@ def list_jobs(platform, status, limit, raw):
 @click.argument("job_name")
 def list_annotations(platform, no_consolidate, raw, job_name):
     consolidate = not no_consolidate
-    annotations = fetch_annotations(job_name, platform=platform, consolidate=consolidate)
+    annotations, _ = fetch_annotations(job_name, platform=platform, consolidate=consolidate)
     output_args = {'indent': 2}
     if not raw:
         annotations.set_excluded_null()
@@ -102,17 +106,22 @@ def cli_generate_manifest(platform, metadata, s3_images_uri):
               help="'combine' - produce a single image containing all image annotations, 'separate' - produce a single image per image annotation")
 @click.option("-p", "--platform", type=click.Choice(['sagemaker', 'labelbox'],
                                                     case_sensitive=False), default='labelbox', help="platform to fetch from")
-@click.option("-o", "--output", type=click.Path(), default="%s/output/coco-datasets" % (os.getcwd()),
-              help="output folder, exports stored in '$OUTPUT/coco-datasets/coco-$timestamp.json'")
+@click.option("-o", "--output", type=click.Path(), default="{}/output/coco-datasets/{}".format(os.getcwd(), now),
+              help="output folder, exports stored in '$OUTPUT/coco-datasets/$timestamp'")
 @click.option('--filter-min-confidence', type=click.FloatRange(0.0, 1.0), default=0.0,
               help="filter images with a minimum computed confidence (0-100)")
 @click.option('--filter-min-labelers', type=click.IntRange(0, 10), default=3,
               help="filter images labeled by a minimum number of labelers (0-10)")
 @click.option('--validation-set', type=click.FloatRange(0.0, .35), default=0.0,
               help="creates a validation coco set using the given percentage")
+@click.option('--coco-file-name', type=str, default="coco-{}.json".format(now),
+              help="output file name, defaults to coco-$timestamp.json")
+@click.option('--validation-file-name', type=str, default="coco-val-{}.json".format(now),
+              help="output file name, defaults to coco-val-$timestamp.json")
 @click.argument("coco_generate_config", type=click.File('rb'))
 def cli_generate_coco(platform, output, mode, filter_min_confidence,
-                      filter_min_labelers, coco_generate_config, validation_set):
+                      filter_min_labelers, coco_generate_config, validation_set,
+                      coco_file_name, validation_file_name):
     separate = mode == 'separate'
     generate_coco_dataset(coco_generate_config,
                           output=output,
@@ -120,7 +129,9 @@ def cli_generate_coco(platform, output, mode, filter_min_confidence,
                           separate=separate,
                           filter_min_confidence=filter_min_confidence,
                           filter_min_labelers=filter_min_labelers,
-                          validation_set=validation_set)
+                          validation_set=validation_set,
+                          coco_file_name=coco_file_name,
+                          validation_file_name=validation_file_name)
 
 
 @click.command(name="create-dataset", help="Generate a Labelbox dataset using a manifest file")
@@ -220,7 +231,6 @@ def cli_annotate_image(image):
         # plt.savefig(os.path.join(path, 'output.png'), dpi=90, bbox_inches='tight')
     else:
         logger.error('Annotation returned unexpected result, exiting')
-
 
 
 @click_log.simple_verbosity_option(logger)
