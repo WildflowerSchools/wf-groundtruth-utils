@@ -66,23 +66,44 @@ class CocoGenerator:
                     continue
 
                 annotation_idx = 0
+                all_annotations = []
+                bbox_category = None
                 for annotation_config in job_config['annotations']:
-                    all_annotations = []
-
                     if annotation_config['type'] == 'bbox':
                         logger.info(
                             "%s - Parsing bbox annotations for category '%s'" %
                             (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['match'])
-                        all_annotations += [match.value
-                                            for idx, match in enumerate(jsonpath_expr.find(image_as_dict['annotations']))]
+
+                        for idx, match in enumerate(jsonpath_expr.find(image_as_dict['annotations'])):
+                            if not separate_by_annotation and bbox_category is not None:
+                                logger.warning(
+                                    "%s - Combine mode expects a single bbox, multiple bboxes ignored - %s" %
+                                    (image.external_id, annotation_config['category']))
+                                continue
+
+                            bbox_category = annotation_config['category']
+                            all_annotations += [{
+                                'annotation': match.value,
+                                'type': 'bbox',
+                                'category': annotation_config['category'],
+                                'visibility': True
+                            }]
                     elif annotation_config['type'] == 'keypoint':
+                        if separate_by_annotation:
+                            logger.warning(
+                                "%s - 'Separate' by annotation mode ignores keypoints, passing on %s" %
+                                (image.external_id, annotation_config['category']))
+                            continue
+
                         logger.info("%s - Parsing keypoint visible annotations for category '%s'" %
                                     (image.external_id, annotation_config['category']))
                         jsonpath_expr = parse(annotation_config['visible'])
                         visible_annotations = [
                             {
                                 'annotation': match.value,
+                                'type': 'keypoint',
+                                'category': annotation_config['category'],
                                 'visibility': CocoKeypointAnnotation.Visibility.VISIBILITY_LABELED_VISIBLE} for match in jsonpath_expr.find(
                                 image_as_dict['annotations'])]
 
@@ -92,54 +113,62 @@ class CocoGenerator:
                         not_visible_annotations = [
                             {
                                 'annotation': match.value,
+                                'type': 'keypoint',
+                                'category': annotation_config['category'],
                                 'visibility': CocoKeypointAnnotation.Visibility.VISIBILITY_LABELED_NOT_VISIBLE} for match in jsonpath_expr.find(
                                 image_as_dict['annotations'])]
 
                         all_annotations += visible_annotations + not_visible_annotations
 
-                    for annotation_match_idx, annotation_match in enumerate(all_annotations):
-                        file_name = external_id
+                for annotation_match_idx, annotation_match in enumerate(all_annotations):
+                    file_name = external_id
+                    if separate_by_annotation:
+                        file_name = get_separated_file_name(file_name, annotation_idx)
+
+                    if file_name not in coco_images:
+                        image_id += 1
+                        coco_images[file_name] = {
+                            'image': CocoImage(
+                                id=image_id,
+                                file_name=file_name,
+                                coco_url=os.path.join(os.path.split(image.url)[0], file_name),
+                                width=0,
+                                height=0),
+                            'annotations': {}}
+
+                    if separate_by_annotation:
+                        annotation_idx += 1
+
+                    external_annotation_id = image.external_id
+                    if 'annotationIdPattern' in job_config:
+                        rexp = re.compile(job_config['annotationIdPattern'])
+                        external_annotation_id = "%s - %s" % (file_name,
+                                                              ''.join(re.split(rexp, image.external_id)))
+                    elif separate_by_annotation:
+                        external_annotation_id = "%s - %s" % (file_name, annotation_match_idx)
+
+                    if external_annotation_id not in coco_images[file_name]['annotations']:
                         if separate_by_annotation:
-                            file_name = get_separated_file_name(file_name, annotation_idx)
+                            category_id = get_coco_category(annotation_match['category']).id
+                        else:
+                            category_id = get_coco_category(bbox_category).id
 
-                        if file_name not in coco_images:
-                            image_id += 1
-                            coco_images[file_name] = {
-                                'image': CocoImage(
-                                    id=image_id,
-                                    file_name=file_name,
-                                    coco_url=os.path.join(os.path.split(image.url)[0], file_name),
-                                    width=0,
-                                    height=0),
-                                'annotations': {}}
+                        coco_images[file_name]['annotations'][external_annotation_id] = CocoKeypointAnnotation(
+                            image_id=image_id, category_id=category_id)
 
-                        if separate_by_annotation:
-                            annotation_idx += 1
-
-                        external_annotation_id = image.external_id
-                        if 'annotationIdPattern' in job_config:
-                            rexp = re.compile(job_config['annotationIdPattern'])
-                            external_annotation_id = "%s - %s" % (file_name,
-                                                                  ''.join(re.split(rexp, image.external_id)))
-                        elif annotation_config['type'] == 'bbox':
-                            external_annotation_id = "%s - %s" % (file_name, annotation_match_idx)
-
-                        if external_annotation_id not in coco_images[file_name]['annotations']:
-                            coco_images[file_name]['annotations'][external_annotation_id] = CocoKeypointAnnotation(
-                                image_id=image_id, category_id=get_coco_category(annotation_config['category']).id)
-
-                        if annotation_config['type'] == 'bbox':
-                            coco_images[file_name]['annotations'][external_annotation_id].bbox = [
-                                annotation_match['left'],
-                                annotation_match['top'],
-                                annotation_match['width'],
-                                annotation_match['height']]
-                        elif annotation_config['type'] == 'keypoint':
-                            coco_images[file_name]['annotations'][external_annotation_id].add_keypoint(
-                                CocoKeypointCategory.Keypoint(annotation_config['category']),
-                                annotation_match['annotation']['x'],
-                                annotation_match['annotation']['y'],
-                                CocoKeypointAnnotation.Visibility(annotation_match['visibility']))
+                    current_annotation = coco_images[file_name]['annotations'][external_annotation_id]
+                    if annotation_match['type'] == 'bbox':
+                        current_annotation.bbox = [
+                            annotation_match['annotation']['left'],
+                            annotation_match['annotation']['top'],
+                            annotation_match['annotation']['width'],
+                            annotation_match['annotation']['height']]
+                    elif annotation_match['type'] == 'keypoint':
+                        current_annotation.add_keypoint(
+                            CocoKeypointCategory.Keypoint(annotation_match['category']),
+                            annotation_match['annotation']['x'],
+                            annotation_match['annotation']['y'],
+                            CocoKeypointAnnotation.Visibility(annotation_match['visibility']))
 
         annotation_id = 0
         for external_id in coco_images:
