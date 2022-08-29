@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "wf-groundtruth-utils"
+version = "0.2.0"
+description = "Tools for processing sagemaker/labelbox labeling jobs"
+authors = ["Benjamin Jaffe-Talberg <ben.talberg@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/WildflowerSchools/wf-groundtruth-utils"
+license = "MIT"
+keywords = ['sagemaker', 'labelbox', 'ground truth', 'S3']
+classifiers = [
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+]
+
+[tool.poetry.dependencies]
+boto3 = "^1.12"
+botocore = "^1.15"
+click = ">=7.1.1"
+click-log = "^0.3.2"
+googledrivedownloader = "^0.4"
+gluoncv = "^0.7.0"
+jsonpath-ng = "^1.5.1"
+labelbox = "^2.4"
+mxnet = "^1.8.0"
+ndjson = "^0.3.1"
+numpy = "^1.20.0"
+Pillow = "*"
+pydantic = "^1.5.1"
+python = ">=3.8,<3.12"
+PyYAML = "^5.3.1"
+scipy = "^1.8.0"
+wf-pycocotools = "^2.0.1.4"
+wf-pytorch-yolo-v4 = "^0.1.5"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.2"
+black = "^22.3.0"
+
+[tool.poetry.scripts]
+groundtruth = "groundtruth_utils.cli:cli"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
