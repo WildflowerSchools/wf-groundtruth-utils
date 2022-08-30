@@ -12,8 +12,8 @@ ALPHAPOSE_MXNET_WEIGHTS_ID = '1TTf8Ox-ECGXRAeX4cHYkEMBDVJEZgBL6'
 
 
 # Thanks quantumSoup @ https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
-def md5(fname):
-    hash_md5 = hashlib.md5()
+def sha256(fname):
+    hash_md5 = hashlib.sha256()
     with open(fname, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
@@ -22,7 +22,7 @@ def md5(fname):
 
 def validate_checksum(id, dest_path):
     if id == ALPHAPOSE_MXNET_WEIGHTS_ID:
-        return '34b6cc14f7932b7d7b3631846bda08d0' == md5(dest_path)
+        return 'bf0e658795a89950b75268ac6bcaa0debf585e4e0265155abbd45529eecce626' == sha256(dest_path)
 
     return False
 
