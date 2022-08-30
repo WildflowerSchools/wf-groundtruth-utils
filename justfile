@@ -1,8 +1,8 @@
 build:
-    python setup.py install
+    poetry build
 
-install-dev:
-    pip install -e .[development]
+install:
+    poetry install
 
 fmt:
     autopep8 --aggressive --recursive --in-place ./groundtruth_utils/

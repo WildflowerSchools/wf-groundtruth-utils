@@ -6,7 +6,7 @@
 
 ### CLI
 
-    just build
+    just install
     groundtruth --help
     
 *Generate manifest*
@@ -21,7 +21,7 @@
 
 Install Dev Packages
 
-    just install-dev
+    just install
 
 Auto-format Code (PEP8 standard)
 

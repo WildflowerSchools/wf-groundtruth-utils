@@ -13,6 +13,9 @@ classifiers = [
     'Operating System :: OS Independent',
     'Programming Language :: Python',
 ]
+packages = [
+    { include = "groundtruth_utils" }
+]
 
 [tool.poetry.dependencies]
 boto3 = "^1.12"
@@ -33,7 +36,6 @@ PyYAML = "^5.3.1"
 scipy = "^1.8.0"
 wf-pycocotools = "^2.0.1.4"
 wf-pytorch-yolo-v4 = "^0.2.0"
-
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.2"

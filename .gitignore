@@ -17,3 +17,4 @@ generate_coco_config.yml
 pytorch-YOLOv4
 mxnet
 .python-version
+.env
