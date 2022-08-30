@@ -209,6 +209,7 @@ def cli_delete_mals(mal_files, output, job_name):
 @click.command(name="annotate-image", help="Annotate an image")
 @click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
 def cli_annotate_image(image):
+    # logger.warn("Function deprecated")
     annotator = Annotate()
     result = annotator.annotate_image(image)
 

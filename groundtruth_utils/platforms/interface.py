@@ -41,4 +41,4 @@ class PlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_job(self, job_name='', attrs=None):
-        raise NotImplemented
+        raise NotImplementedError

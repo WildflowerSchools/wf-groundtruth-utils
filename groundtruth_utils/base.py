@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 
 
@@ -20,4 +21,6 @@ def data_dir():
     """
     :return: data directory in the filesystem for storage, for example when downloading models
     """
-    return os.getenv('WF_GROUNDTRUTH_HOME', data_dir_default())
+    dir = os.getenv('WF_GROUNDTRUTH_HOME', data_dir_default())
+    Path(dir).mkdir(parents=True, exist_ok=True)
+    return dir
