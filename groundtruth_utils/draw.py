@@ -1,10 +1,12 @@
+from typing import Union
+
 import boto3
 from botocore.exceptions import ClientError
 from PIL import Image, ImageDraw
 
 from .aws.s3_util import download_fileobj_as_bytestream
 from .log import logger
-from .platforms.models.annotation import AnnotationTypes
+from .platforms.models.annotation import AnnotationTypes, BoundingBoxAnnotation, KeypointAnnotation
 
 
 def get_s3_image_as_pil(image_uri):
@@ -25,13 +27,42 @@ def get_s3_image_as_pil(image_uri):
     return img_pil
 
 
-def draw_annotations(image_uri, annotations):
-    img_pil = get_s3_image_as_pil(image_uri)
+def draw_annotations(image: Union[str, Image.Image], annotations):
+    if isinstance(image, Image.Image):
+        img_pil = image
+    else:
+        img_pil = get_s3_image_as_pil(image)
+
     img_draw = ImageDraw.Draw(img_pil, 'RGBA')
 
     # Load boxes
     for annotation in annotations:
-        draw_shape_on_image(img_draw, annotation)
+        if isinstance(annotation, BoundingBoxAnnotation) or isinstance(annotation, KeypointAnnotation):
+            draw_shape_on_image(img_draw, annotation)
+
+        if isinstance(annotation, dict) and 'bbox' in annotation and 'keypoints' in annotation:
+            for ii, (type, coords) in enumerate(annotation.items()):
+                if type == 'bbox':
+                    draw_shape_on_image(img_draw, BoundingBoxAnnotation(
+                        id='bbox',
+                        label='bbox',
+                        type=AnnotationTypes.TYPE_BOUNDING_BOX,
+                        left=float(coords[0]),
+                        top=float(coords[1]),
+                        width=float(coords[2]),
+                        height=float(coords[3]),
+                        raw_annotation=annotation
+                    ))
+                elif type == 'keypoints':
+                    for keypoint in coords:
+                        draw_shape_on_image(img_draw, KeypointAnnotation(
+                            id='keypoint',
+                            label='bbox',
+                            type=AnnotationTypes.TYPE_KEYPOINT,
+                            x=float(keypoint[0]),
+                            y=float(keypoint[1]),
+                            raw_annotation=annotation
+                        ))
 
     return img_pil
 

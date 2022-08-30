@@ -1,17 +1,19 @@
-import click
-import click_log
 from datetime import datetime
 import json
 import os
 
+import click
+import click_log
+from dotenv import load_dotenv
+
 from .annotate import Annotate
+from .draw import draw_annotations
 from .log import logger
 from .core import create_dataset, create_job, delete_mals, fetch_annotations, fetch_jobs, generate_coco_dataset, generate_image_set, generate_mal_ndjson, generate_manifest, upload_coco_labels_to_job, upload_mal_ndjson, status_mal_ndjson
 from .platforms.models.job import Job
 
 click_log.basic_config(logger)
-
-
+load_dotenv()
 now = datetime.now().strftime("%m-%d-%YT%H:%M:%S")
 
 
@@ -209,27 +211,17 @@ def cli_delete_mals(mal_files, output, job_name):
 @click.command(name="annotate-image", help="Annotate an image")
 @click.option("-i", "--image", type=click.Path(exists=True), required=True, help="Image to annotate")
 def cli_annotate_image(image):
-    # logger.warn("Function deprecated")
     annotator = Annotate()
-    result = annotator.annotate_image(image)
+    annotations = annotator.annotate_image(image)
 
-    if result is not None:
-        click.echo(json.dumps(result, indent=4))
+    if annotations is not None:
+        from PIL import Image
+        annotated_image = draw_annotations(Image.open(image), annotations)
 
-        # import matplotlib.pyplot as plt
-        # from matplotlib.patches import Rectangle
-        # from PIL import Image
-        #
-        # # Display the image
-        # plt.imshow(Image.open(image))
-        #
-        # # Add the patch to the Axes
-        # for ann in result:
-        #     box = ann['bbox']
-        #     plt.gca().add_patch(Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1,edgecolor='r',facecolor='none'))
-        #
-        # path = os.path.dirname(image)
-        # plt.savefig(os.path.join(path, 'output.png'), dpi=90, bbox_inches='tight')
+        annotated_image_path = os.path.join(os.path.dirname(image), 'output.png')
+        annotated_image.save(annotated_image_path)
+        logger.info("Saved annotated image to: {}".format(annotated_image_path))
+        click.echo(json.dumps(annotations, indent=4))
     else:
         logger.error('Annotation returned unexpected result, exiting')
 
