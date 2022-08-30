@@ -1,10 +1,11 @@
 import hashlib
 import os
+from pathlib import Path
 
 from .log import logger
 from .base import data_dir
 
-from google_drive_downloader import GoogleDriveDownloader as gdd
+import gdown
 
 
 ALPHAPOSE_MXNET_WEIGHTS_ID = '1TTf8Ox-ECGXRAeX4cHYkEMBDVJEZgBL6'
@@ -34,18 +35,15 @@ def download_weights(id=ALPHAPOSE_MXNET_WEIGHTS_ID):
     if dest_path is None:
         return None
 
-    overwrite = False
+    if Path(dest_path).is_file() and validate_checksum(id, dest_path):
+        return dest_path
+
     for ii in range(3):
         if ii > 0:
-            overwrite = True
             logger.warn("Checksum failed, retrying download...")
 
         try:
-            gdd.download_file_from_google_drive(file_id=id,
-                                                dest_path=dest_path,
-                                                unzip=True,
-                                                showsize=True,
-                                                overwrite=overwrite)
+            gdown.download(id=id, output=dest_path, quiet=False)
         except Exception as e:
             logger.error('Error at %s', 'file download', exc_info=e)
             return None
