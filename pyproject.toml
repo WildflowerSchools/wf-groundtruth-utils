@@ -40,8 +40,14 @@ scipy = "^1.8.0"
 wf-pycocotools = "^2.0.1.4"
 python-dotenv = "^0.20.0"
 wf-cv-utils = "^3.4.0"
-torch = {url = "https://download.pytorch.org/whl/nightly/cpu/torch-1.13.0.dev20220906-cp310-none-macosx_11_0_arm64.whl"}
-torchvision = {url = "https://download.pytorch.org/whl/nightly/cpu/torchvision-0.14.0.dev20220906-cp310-cp310-macosx_11_0_arm64.whl"}
+torch = [
+    {version=">=1.11.0", markers = "sys_platform == 'linux'" },
+    {url = "https://download.pytorch.org/whl/nightly/cpu/torch-1.13.0.dev20220906-cp310-none-macosx_11_0_arm64.whl", markers = "sys_platform == 'darwin'"}
+]
+torchvision = [
+    {version="*", markers = "sys_platform == 'linux'" },
+    {url = "https://download.pytorch.org/whl/nightly/cpu/torchvision-0.14.0.dev20220906-cp310-cp310-macosx_11_0_arm64.whl", markers = "sys_platform == 'darwin'"}
+]
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.2"
