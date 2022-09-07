@@ -1,0 +1,80 @@
+jobs:
+  - id: ckcgtehrlwfam08975aino92a
+    name: Capucine - Keypoints
+    externalIdPattern: (\d*)\.\d*(\.png)
+    annotationIdPattern: \d*\.(\d*)\.png
+    annotations:
+      - type: bbox
+        category: person
+        match:  $[?(@.type = 'BoundingBox' & @.label = 'Adult (box)')]
+      - type: bbox
+        category: person
+        match:  $[?(@.type = 'BoundingBox' & @.label = 'Child (box)')]
+      - type: keypoint
+        category: nose
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Nose - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Nose - Not Visible')]
+      - type: keypoint
+        category: left_eye
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Eye - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Eye - Not Visible')]
+      - type: keypoint
+        category: right_eye
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Eye - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Eye - Not Visible')]
+      - type: keypoint
+        category: left_ear
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Ear - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Ear - Not Visible')]
+      - type: keypoint
+        category: right_ear
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Ear - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Ear - Not Visible')]
+      - type: keypoint
+        category: left_shoulder
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Shoulder - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Shoulder - Not Visible')]
+      - type: keypoint
+        category: right_shoulder
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Shoulder - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Shoulder - Not Visible')]
+      - type: keypoint
+        category: left_elbow
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Elbow - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Elbow - Not Visible')]
+      - type: keypoint
+        category: right_elbow
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Elbow - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Elbow - Not Visible')]
+      - type: keypoint
+        category: left_wrist
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Wrist - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Left Wrist - Not Visible')]
+      - type: keypoint
+        category: right_wrist
+        visible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Wrist - Visible')]
+        notVisible: $[?(@.type = 'Keypoint' & @.label =~ 'Right Wrist - Not Visible')]
+      - type: keypoint
+        category: left_hip
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Hip - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Hip - Not Visible')]
+      - type: keypoint
+        category: right_hip
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Hip - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Hip - Not Visible')]
+      - type: keypoint
+        category: left_knee
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Knee - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Knee - Not Visible')]
+      - type: keypoint
+        category: right_knee
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Knee - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Knee - Not Visible')]
+      - type: keypoint
+        category: left_ankle
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Ankle - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Left Ankle - Not Visible')]
+      - type: keypoint
+        category: right_ankle
+        visible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Ankle - Visible')]
+        notVisible:  $[?(@.type = 'Keypoint' & @.label =~ 'Right Ankle - Not Visible')]
