@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wf-groundtruth-utils"
-version = "0.2.0"
+version = "0.2.1"
 description = "Tools for processing sagemaker/labelbox labeling jobs"
 authors = ["Benjamin Jaffe-Talberg <ben.talberg@gmail.com>"]
 readme = "README.md"

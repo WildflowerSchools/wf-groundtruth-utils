@@ -23,7 +23,7 @@ Copy `.env.template` to `.env` and fill in required ENV vars. `.env` file will a
 
 *Generate COCO dataset from keypoints*
 
-    python -m groundtruth_utils generate-coco -m combine --filter-min-labelers 2 --coco-file-name wf.train.json ./groundtruth_utils/config/generate_coco_from_keypoint_labels.yml
+    groundtruth generate-coco -m combine --filter-min-labelers 2 --coco-file-name wf.train.json ./groundtruth_utils/config/generate_coco_from_keypoint_labels.yml
 
 ### Development
 
