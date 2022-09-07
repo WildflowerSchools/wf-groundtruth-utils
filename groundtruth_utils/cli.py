@@ -226,6 +226,13 @@ def cli_annotate_image(image):
         logger.error('Annotation returned unexpected result, exiting')
 
 
+@click.command(name="generate-groundtruth-videos", help="Generate groundtruth videos with boxes drawn around child-of-interest")
+@click.option("-g", "--groundtruth", type=click.Path(exists=True), required=True,
+              help="CVS formatted file specifying groundtruth instances (classroom, start time, end time, camera, child)")
+def cli_generate_groundtruth_videos(groundtruth):
+    logger.info("Initiated")
+
+
 @click_log.simple_verbosity_option(logger)
 @click.group()
 def cli():
@@ -245,3 +252,4 @@ cli.add_command(cli_upload_mal_ndjson)
 cli.add_command(cli_status_mal_ndjson)
 cli.add_command(cli_delete_mals)
 cli.add_command(cli_annotate_image)
+cli.add_command(cli_generate_groundtruth_videos)
