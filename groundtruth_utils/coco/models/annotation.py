@@ -27,7 +27,7 @@ class Annotation(BaseModel):
 
 
 class KeypointAnnotation(Annotation):
-    keypoints: List[int] = [0] * len(KeypointCategory.coco_person_keypoint_categories()) * 3
+    keypoints: List[int] = [0] * len(KeypointCategory.coco_17_person_keypoint_categories()) * 3
     num_keypoints: int = 0
 
     class Visibility(IntEnum):
@@ -36,7 +36,7 @@ class KeypointAnnotation(Annotation):
         VISIBILITY_LABELED_VISIBLE = 2
 
     def get_keypoint_index(self, category: KeypointCategory):
-        keypoint_categories = KeypointCategory.coco_person_keypoint_categories()
+        keypoint_categories = KeypointCategory.coco_17_person_keypoint_categories()
         if category.name not in keypoint_categories:
             logger.warn("keypoint category '%s' not found, not capturing keypoint" % category)
             return

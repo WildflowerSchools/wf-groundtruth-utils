@@ -26,22 +26,22 @@ def all_coco_categories():
             id=1,
             name="person",
             supercategory="person",
-            keypoints=KeypointCategory.coco_person_keypoint_categories(),
-            skeleton=KeypointCategory.coco_person_skeleton()
+            keypoints=KeypointCategory.coco_17_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_17_person_skeleton()
         ),
         KeypointCategory(
             id=2,
             name="adult",
             supercategory="person",
-            keypoints=KeypointCategory.coco_person_keypoint_categories(),
-            skeleton=KeypointCategory.coco_person_skeleton()
+            keypoints=KeypointCategory.coco_17_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_17_person_skeleton()
         ),
         KeypointCategory(
             id=3,
             name="child",
             supercategory="person",
-            keypoints=KeypointCategory.coco_person_keypoint_categories(),
-            skeleton=KeypointCategory.coco_person_skeleton()
+            keypoints=KeypointCategory.coco_17_person_keypoint_categories(),
+            skeleton=KeypointCategory.coco_17_person_skeleton()
         )]
 
 
@@ -107,7 +107,7 @@ class KeypointCategory(BaseCategory):
     setattr(Keypoint, '__new__', KeypointLookup)
 
     @staticmethod
-    def coco_person_keypoint_categories():
+    def coco_17_person_keypoint_categories():
         return [
             KeypointCategory.Keypoint.NOSE.name,
             KeypointCategory.Keypoint.LEFT_EYE.name,
@@ -125,12 +125,59 @@ class KeypointCategory(BaseCategory):
             KeypointCategory.Keypoint.LEFT_KNEE.name,
             KeypointCategory.Keypoint.RIGHT_KNEE.name,
             KeypointCategory.Keypoint.LEFT_ANKLE.name,
-            KeypointCategory.Keypoint.RIGHT_ANKLE.name,
-            KeypointCategory.Keypoint.NECK.name
+            KeypointCategory.Keypoint.RIGHT_ANKLE.name
         ]
 
     @staticmethod
-    def coco_person_skeleton():
+    def coco_18_person_keypoint_categories():
+        return [
+            KeypointCategory.Keypoint.NOSE.name,
+            KeypointCategory.Keypoint.NECK.name,
+            KeypointCategory.Keypoint.RIGHT_SHOULDER.name,
+            KeypointCategory.Keypoint.RIGHT_ELBOW.name,
+            KeypointCategory.Keypoint.RIGHT_WRIST.name,
+            KeypointCategory.Keypoint.LEFT_SHOULDER.name,
+            KeypointCategory.Keypoint.LEFT_ELBOW.name,
+            KeypointCategory.Keypoint.LEFT_WRIST.name,
+            KeypointCategory.Keypoint.RIGHT_HIP.name,
+            KeypointCategory.Keypoint.RIGHT_KNEE.name,
+            KeypointCategory.Keypoint.RIGHT_ANKLE.name,
+            KeypointCategory.Keypoint.LEFT_HIP.name,
+            KeypointCategory.Keypoint.LEFT_KNEE.name,
+            KeypointCategory.Keypoint.LEFT_ANKLE.name,
+            KeypointCategory.Keypoint.RIGHT_EYE.name,
+            KeypointCategory.Keypoint.LEFT_EYE.name,
+            KeypointCategory.Keypoint.RIGHT_EAR.name,
+            KeypointCategory.Keypoint.LEFT_EAR.name,
+
+        ]
+
+    @staticmethod
+    def coco_17_person_skeleton():
+        return [
+            [KeypointCategory.Keypoint.LEFT_ANKLE.id, KeypointCategory.Keypoint.LEFT_KNEE.id],
+            [KeypointCategory.Keypoint.LEFT_KNEE.id, KeypointCategory.Keypoint.LEFT_HIP.id],
+            [KeypointCategory.Keypoint.RIGHT_ANKLE.id, KeypointCategory.Keypoint.RIGHT_KNEE.id],
+            [KeypointCategory.Keypoint.RIGHT_KNEE.id, KeypointCategory.Keypoint.RIGHT_HIP.id],
+            [KeypointCategory.Keypoint.LEFT_HIP.id, KeypointCategory.Keypoint.RIGHT_HIP.id],
+            [KeypointCategory.Keypoint.LEFT_SHOULDER.id, KeypointCategory.Keypoint.LEFT_HIP.id],
+            [KeypointCategory.Keypoint.RIGHT_SHOULDER.id, KeypointCategory.Keypoint.RIGHT_HIP.id],
+            [KeypointCategory.Keypoint.LEFT_SHOULDER.id, KeypointCategory.Keypoint.RIGHT_SHOULDER.id],
+            [KeypointCategory.Keypoint.LEFT_SHOULDER.id, KeypointCategory.Keypoint.LEFT_ELBOW.id],
+            [KeypointCategory.Keypoint.RIGHT_SHOULDER.id, KeypointCategory.Keypoint.RIGHT_ELBOW.id],
+            [KeypointCategory.Keypoint.LEFT_ELBOW.id, KeypointCategory.Keypoint.LEFT_WRIST.id],
+            [KeypointCategory.Keypoint.RIGHT_ELBOW.id, KeypointCategory.Keypoint.RIGHT_WRIST.id],
+            [KeypointCategory.Keypoint.LEFT_EYE.id, KeypointCategory.Keypoint.RIGHT_EYE.id],
+            [KeypointCategory.Keypoint.NOSE.id, KeypointCategory.Keypoint.LEFT_EYE.id],
+            [KeypointCategory.Keypoint.NOSE.id, KeypointCategory.Keypoint.RIGHT_EYE.id],
+            [KeypointCategory.Keypoint.LEFT_EYE.id, KeypointCategory.Keypoint.LEFT_EAR.id],
+            [KeypointCategory.Keypoint.RIGHT_EYE.id, KeypointCategory.Keypoint.RIGHT_EAR.id],
+            [KeypointCategory.Keypoint.LEFT_EAR.id, KeypointCategory.Keypoint.LEFT_SHOULDER.id],
+            [KeypointCategory.Keypoint.RIGHT_EAR.id, KeypointCategory.Keypoint.RIGHT_SHOULDER.id]
+        ]
+
+    @staticmethod
+    def coco_18_person_skeleton():
         return [
             [KeypointCategory.Keypoint.LEFT_ANKLE.id, KeypointCategory.Keypoint.LEFT_KNEE.id],
             [KeypointCategory.Keypoint.LEFT_KNEE.id, KeypointCategory.Keypoint.LEFT_HIP.id],
